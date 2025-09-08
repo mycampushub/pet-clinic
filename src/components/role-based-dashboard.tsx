@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -52,10 +52,30 @@ interface QuickAction {
 }
 
 export function RoleBasedDashboard() {
-  const { user, clinic, hasPermission, switchRole } = useAuth()
+  const { user, hasPermission } = useAuth()
   const [activeTab, setActiveTab] = useState("overview")
+  const [clinic, setClinic] = useState<any>(null)
 
-  if (!user || !clinic) {
+  // Fetch clinic info when user is available
+  useEffect(() => {
+    if (user?.clinicId) {
+      fetchClinicInfo()
+    }
+  }, [user])
+
+  const fetchClinicInfo = async () => {
+    try {
+      const response = await fetch(`/api/v1/clinics/${user?.clinicId}`)
+      if (response.ok) {
+        const clinicData = await response.json()
+        setClinic(clinicData)
+      }
+    } catch (error) {
+      console.error("Error fetching clinic info:", error)
+    }
+  }
+
+  if (!user) {
     return null
   }
 
@@ -225,21 +245,21 @@ export function RoleBasedDashboard() {
             title: "New Appointment",
             description: "Schedule a new patient visit",
             icon: <Plus className="h-5 w-5" />,
-            action: () => console.log("New appointment"),
+            action: () => alert("New appointment scheduling would be implemented here"),
             color: "bg-blue-500 hover:bg-blue-600"
           },
           {
             title: "Check-in Patient",
             description: "Register arriving patient",
             icon: <UserCheck className="h-5 w-5" />,
-            action: () => console.log("Check-in patient"),
+            action: () => alert("Patient check-in would be implemented here"),
             color: "bg-green-500 hover:bg-green-600"
           },
           {
             title: "Create Invoice",
             description: "Generate new invoice",
             icon: <CreditCard className="h-5 w-5" />,
-            action: () => console.log("Create invoice"),
+            action: () => alert("Invoice creation would be implemented here"),
             color: "bg-purple-500 hover:bg-purple-600"
           }
         ]
@@ -250,21 +270,21 @@ export function RoleBasedDashboard() {
             title: "Start Visit",
             description: "Begin patient consultation",
             icon: <Stethoscope className="h-5 w-5" />,
-            action: () => console.log("Start visit"),
+            action: () => alert("Visit start would be implemented here"),
             color: "bg-blue-500 hover:bg-blue-600"
           },
           {
             title: "Write Prescription",
             description: "Prescribe medication",
             icon: <Pill className="h-5 w-5" />,
-            action: () => console.log("Write prescription"),
+            action: () => alert("Prescription writing would be implemented here"),
             color: "bg-green-500 hover:bg-green-600"
           },
           {
             title: "Order Lab Test",
             description: "Request laboratory testing",
             icon: <Flask className="h-5 w-5" />,
-            action: () => console.log("Order lab test"),
+            action: () => alert("Lab test ordering would be implemented here"),
             color: "bg-orange-500 hover:bg-orange-600"
           }
         ]
@@ -275,21 +295,21 @@ export function RoleBasedDashboard() {
             title: "Collect Samples",
             description: "Gather lab specimens",
             icon: <Flask className="h-5 w-5" />,
-            action: () => console.log("Collect samples"),
+            action: () => alert("Sample collection would be implemented here"),
             color: "bg-blue-500 hover:bg-blue-600"
           },
           {
             title: "Update Records",
             description: "Document patient vitals",
             icon: <FileText className="h-5 w-5" />,
-            action: () => console.log("Update records"),
+            action: () => alert("Record updates would be implemented here"),
             color: "bg-green-500 hover:bg-green-600"
           },
           {
             title: "Manage Inventory",
             description: "Check stock levels",
             icon: <Package className="h-5 w-5" />,
-            action: () => console.log("Manage inventory"),
+            action: () => alert("Inventory management would be implemented here"),
             color: "bg-purple-500 hover:bg-purple-600"
           }
         ]
@@ -300,21 +320,21 @@ export function RoleBasedDashboard() {
             title: "Fill Prescription",
             description: "Dispense medication",
             icon: <Pill className="h-5 w-5" />,
-            action: () => console.log("Fill prescription"),
+            action: () => alert("Prescription filling would be implemented here"),
             color: "bg-blue-500 hover:bg-blue-600"
           },
           {
             title: "Check Inventory",
             description: "Monitor stock levels",
             icon: <Package className="h-5 w-5" />,
-            action: () => console.log("Check inventory"),
+            action: () => alert("Inventory checking would be implemented here"),
             color: "bg-green-500 hover:bg-green-600"
           },
           {
             title: "Order Supplies",
             description: "Reorder medications",
             icon: <Plus className="h-5 w-5" />,
-            action: () => console.log("Order supplies"),
+            action: () => alert("Supply ordering would be implemented here"),
             color: "bg-orange-500 hover:bg-orange-600"
           }
         ]
@@ -325,21 +345,21 @@ export function RoleBasedDashboard() {
             title: "View Reports",
             description: "Analytics and insights",
             icon: <BarChart3 className="h-5 w-5" />,
-            action: () => console.log("View reports"),
+            action: () => alert("Reports viewing would be implemented here"),
             color: "bg-blue-500 hover:bg-blue-600"
           },
           {
             title: "Manage Staff",
             description: "Team administration",
             icon: <Users className="h-5 w-5" />,
-            action: () => console.log("Manage staff"),
+            action: () => alert("Staff management would be implemented here"),
             color: "bg-green-500 hover:bg-green-600"
           },
           {
             title: "Clinic Settings",
             description: "Configure practice preferences",
             icon: <Settings className="h-5 w-5" />,
-            action: () => console.log("Clinic settings"),
+            action: () => alert("Clinic settings would be implemented here"),
             color: "bg-purple-500 hover:bg-purple-600"
           }
         ]
@@ -350,21 +370,21 @@ export function RoleBasedDashboard() {
             title: "Manage Clinics",
             description: "Clinic administration",
             icon: <Building2 className="h-5 w-5" />,
-            action: () => console.log("Manage clinics"),
+            action: () => alert("Clinic management would be implemented here"),
             color: "bg-blue-500 hover:bg-blue-600"
           },
           {
             title: "System Settings",
             description: "Platform configuration",
             icon: <Settings className="h-5 w-5" />,
-            action: () => console.log("System settings"),
+            action: () => alert("System settings would be implemented here"),
             color: "bg-green-500 hover:bg-green-600"
           },
           {
             title: "User Management",
             description: "Platform users",
             icon: <Users className="h-5 w-5" />,
-            action: () => console.log("User management"),
+            action: () => alert("User management would be implemented here"),
             color: "bg-purple-500 hover:bg-purple-600"
           }
         ]

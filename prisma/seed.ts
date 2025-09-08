@@ -100,8 +100,8 @@ async function main() {
       update: {},
       create: {
         ...userData,
-        // In a real app, you'd hash the password
-        // password: await bcrypt.hash('demo123', 12)
+        // Hash the password for demo users
+        password: await bcrypt.hash('demo123', 12),
         isActive: true,
         permissions: []
       }

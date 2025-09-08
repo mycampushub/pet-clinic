@@ -58,6 +58,7 @@ model User {
   clinicId    String?
   email       String   @unique
   name        String
+  password    String   // Added password field
   role        UserRole
   permissions Json?    // Fine-grained permissions
   phone       String?

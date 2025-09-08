@@ -149,8 +149,11 @@ export default function LoginPage() {
             <div className="text-center">
               <h3 className="font-medium text-gray-900 mb-2">Demo Credentials</h3>
               <div className="text-sm text-gray-600 space-y-1">
-                <p><strong>Email:</strong> demo@petclinic.com</p>
-                <p><strong>Password:</strong> demo123</p>
+                <p><strong>Receptionist:</strong> reception@petclinic.com / demo123</p>
+                <p><strong>Veterinarian:</strong> vet@petclinic.com / demo123</p>
+                <p><strong>Vet Tech:</strong> tech@petclinic.com / demo123</p>
+                <p><strong>Manager:</strong> manager@petclinic.com / demo123</p>
+                <p><strong>Admin:</strong> admin@petclinic.com / demo123</p>
                 <p className="text-xs text-gray-500 mt-2">
                   Use these credentials to explore the platform
                 </p>

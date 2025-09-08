@@ -248,27 +248,33 @@ export default function Dashboard() {
   }
 
   const handleNewAppointment = () => {
-    router.push("/appointments/new")
+    // For now, show an alert since the appointment creation page doesn't exist yet
+    alert("Appointment creation feature would be implemented here. This would navigate to /appointments/new")
   }
 
   const handleViewAppointment = (appointmentId: string) => {
-    router.push(`/appointments/${appointmentId}`)
+    // For now, show an alert since the appointment detail page doesn't exist yet
+    alert(`Viewing appointment ${appointmentId}. This would navigate to /appointments/${appointmentId}`)
   }
 
   const handleNewSoapNote = () => {
-    router.push("/medical/soap/new")
+    // For now, show an alert since the SOAP note page doesn't exist yet
+    alert("SOAP note creation feature would be implemented here. This would navigate to /medical/soap/new")
   }
 
   const handlePrescribeMedication = () => {
-    router.push("/pharmacy/prescribe")
+    // For now, show an alert since the prescription page doesn't exist yet
+    alert("Medication prescription feature would be implemented here. This would navigate to /pharmacy/prescribe")
   }
 
   const handleOrderLabTest = () => {
-    router.push("/laboratory/orders/new")
+    // For now, show an alert since the lab order page doesn't exist yet
+    alert("Lab test ordering feature would be implemented here. This would navigate to /laboratory/orders/new")
   }
 
   const handleViewNotifications = () => {
-    router.push("/notifications")
+    // For now, show an alert since the notifications page doesn't exist yet
+    alert("Notifications center would be implemented here. This would navigate to /notifications")
   }
 
   const formatTime = (dateString: string) => {
