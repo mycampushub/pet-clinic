@@ -1,0 +1,542 @@
+// Pet Clinic Management Platform Schema
+// Multi-tenant veterinary practice management system
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// Multi-tenant support
+model Tenant {
+  id          String   @id @default(cuid())
+  name        String
+  settings    Json?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  clinics     Clinic[]
+  users       User[]
+  auditLogs   AuditLog[]
+  
+  @@map("tenants")
+}
+
+// Clinic locations within a tenant
+model Clinic {
+  id          String   @id @default(cuid())
+  tenantId    String
+  name        String
+  address     String?
+  phone       String?
+  email       String?
+  timezone    String   @default("UTC")
+  hours       Json?    // Opening hours as JSON
+  settings    Json?    // Clinic-specific settings
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  
+  users       User[]
+  pets        Pet[]
+  visits      Visit[]
+  appointments Appointment[]
+  inventory   InventoryItem[]
+  invoices    Invoice[]
+  
+  @@map("clinics")
+}
+
+// Users with roles and permissions
+model User {
+  id          String   @id @default(cuid())
+  tenantId    String
+  clinicId    String?
+  email       String   @unique
+  name        String
+  role        UserRole
+  permissions Json?    // Fine-grained permissions
+  phone       String?
+  avatar      String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  clinic      Clinic?  @relation(fields: [clinicId], references: [id])
+  
+  // Relationships
+  visits      Visit[]
+  appointments Appointment[]
+  prescriptions Prescription[]
+  auditLogs   AuditLog[]
+  
+  @@map("users")
+}
+
+enum UserRole {
+  RECEPTIONIST
+  VETERINARIAN
+  VET_TECH
+  PHARMACIST
+  MANAGER
+  OWNER
+  ADMIN
+  AUDITOR
+}
+
+// Pet owners/clients
+model Owner {
+  id          String   @id @default(cuid())
+  name        String
+  email       String?
+  phone       String?
+  address     String?
+  emergencyContact Json?
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  pets        Pet[]
+  invoices    Invoice[]
+  
+  @@map("owners")
+}
+
+// Patients (pets)
+model Pet {
+  id          String   @id @default(cuid())
+  ownerId     String
+  clinicId    String
+  name        String
+  species     String
+  breed       String?
+  dob         DateTime?
+  microchip   String?
+  sex         String?
+  isNeutered  Boolean?
+  weight      Float?   // in kg
+  color       String?
+  notes       String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  owner       Owner    @relation(fields: [ownerId], references: [id])
+  clinic      Clinic   @relation(fields: [clinicId], references: [id])
+  
+  visits      Visit[]
+  appointments Appointment[]
+  prescriptions Prescription[]
+  reminders    Reminder[]
+  
+  @@map("pets")
+}
+
+// Appointments
+model Appointment {
+  id            String   @id @default(cuid())
+  clinicId      String
+  petId         String
+  ownerId       String
+  providerId    String   // User ID of vet/tech
+  serviceCode   String
+  title         String?
+  description   String?
+  startTime     DateTime
+  endTime       DateTime
+  duration      Int      // in minutes
+  status        AppointmentStatus
+  source        AppointmentSource
+  notes         String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  clinic        Clinic   @relation(fields: [clinicId], references: [id])
+  pet           Pet      @relation(fields: [petId], references: [id])
+  provider      User     @relation(fields: [providerId], references: [id])
+  
+  visits        Visit[]
+  
+  @@map("appointments")
+}
+
+enum AppointmentStatus {
+  SCHEDULED
+  CONFIRMED
+  CHECKED_IN
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+}
+
+enum AppointmentSource {
+  ONLINE
+  PHONE
+  WALK_IN
+  STAFF
+}
+
+// Visits/Clinical encounters
+model Visit {
+  id            String   @id @default(cuid())
+  clinicId      String
+  petId         String
+  providerId    String
+  appointmentId String?  // Link to appointment if scheduled
+  checkInAt     DateTime?
+  checkoutAt    DateTime?
+  status        VisitStatus
+  chiefComplaint String?
+  weight        Float?   // Weight at visit
+  temperature   Float?   // Temperature at visit
+  heartRate     Int?     // Heart rate at visit
+  respiratoryRate Int?   // Respiratory rate at visit
+  notes         String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  clinic        Clinic   @relation(fields: [clinicId], references: [id])
+  pet           Pet      @relation(fields: [petId], references: [id])
+  provider      User     @relation(fields: [providerId], references: [id])
+  appointment   Appointment? @relation(fields: [appointmentId], references: [id])
+  
+  soapNotes     SOAPNote[]
+  procedures    Procedure[]
+  prescriptions Prescription[]
+  labOrders     LabOrder[]
+  invoices      Invoice[]
+  
+  @@map("visits")
+}
+
+enum VisitStatus {
+  SCHEDULED
+  CHECKED_IN
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+// SOAP Notes
+model SOAPNote {
+  id          String   @id @default(cuid())
+  visitId     String
+  subjective  String?
+  objective   String?
+  assessment  String?
+  plan        String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  visit       Visit    @relation(fields: [visitId], references: [id], onDelete: Cascade)
+  
+  @@map("soap_notes")
+}
+
+// Procedures performed during visits
+model Procedure {
+  id          String   @id @default(cuid())
+  visitId     String
+  code        String   // Procedure code
+  description String
+  amount      Float?
+  notes       String?
+  anesthesia  Json?    // Anesthesia record
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  visit       Visit    @relation(fields: [visitId], references: [id], onDelete: Cascade)
+  
+  @@map("procedures")
+}
+
+// Medications catalog
+model Medication {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  ndcCode     String?  // National Drug Code
+  schedule    DrugSchedule?
+  strength    String?
+  unit        String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  prescriptions Prescription[]
+  inventory   InventoryItem[]
+  
+  @@unique([name, strength, unit])
+  @@map("medications")
+}
+
+enum DrugSchedule {
+  SCHEDULE_2
+  SCHEDULE_3
+  SCHEDULE_4
+  SCHEDULE_5
+  NON_CONTROLLED
+}
+
+// Prescriptions
+model Prescription {
+  id            String   @id @default(cuid())
+  visitId       String
+  petId         String
+  medicationId  String
+  prescriberId  String   // User ID
+  dose          String
+  frequency     String
+  duration      String
+  refills       Int      @default(0)
+  refillsUsed   Int      @default(0)
+  instructions  String?
+  notes         String?
+  status        PrescriptionStatus
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  visit         Visit    @relation(fields: [visitId], references: [id])
+  pet           Pet      @relation(fields: [petId], references: [id])
+  medication    Medication @relation(fields: [medicationId], references: [id])
+  prescriber    User     @relation(fields: [prescriberId], references: [id])
+  
+  @@map("prescriptions")
+}
+
+enum PrescriptionStatus {
+  ACTIVE
+  COMPLETED
+  CANCELLED
+  EXPIRED
+}
+
+// Inventory
+model InventoryItem {
+  id          String   @id @default(cuid())
+  clinicId    String
+  medicationId String?
+  name        String
+  sku         String?
+  description String?
+  category    String?
+  quantity    Float    @default(0)
+  unit        String?
+  lotNumber   String?
+  expiryDate  DateTime?
+  reorderPoint Float?
+  cost        Float?
+  price       Float?
+  location    String?  // Storage location
+  isControlled Boolean @default(false)
+  schedule    DrugSchedule?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  clinic      Clinic   @relation(fields: [clinicId], references: [id])
+  medication  Medication? @relation(fields: [medicationId], references: [id])
+  
+  @@map("inventory_items")
+}
+
+// Billing and Invoices
+model Invoice {
+  id          String   @id @default(cuid())
+  clinicId    String
+  visitId     String?
+  ownerId     String
+  invoiceNumber String  @unique
+  status      InvoiceStatus
+  dueDate     DateTime
+  subtotal    Float
+  tax         Float    @default(0)
+  total       Float
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  clinic      Clinic   @relation(fields: [clinicId], references: [id])
+  visit       Visit?   @relation(fields: [visitId], references: [id])
+  owner       Owner    @relation(fields: [ownerId], references: [id])
+  
+  lineItems   InvoiceLineItem[]
+  payments    Payment[]
+  
+  @@map("invoices")
+}
+
+enum InvoiceStatus {
+  DRAFT
+  PENDING
+  PAID
+  PARTIAL
+  OVERDUE
+  CANCELLED
+  REFUNDED
+}
+
+model InvoiceLineItem {
+  id          String   @id @default(cuid())
+  invoiceId   String
+  description String
+  quantity    Float    @default(1)
+  unitPrice   Float
+  amount      Float
+  type        LineItemType
+  code        String?  // Service/medication code
+  createdAt   DateTime @default(now())
+  
+  invoice     Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  
+  @@map("invoice_line_items")
+}
+
+enum LineItemType {
+  SERVICE
+  MEDICATION
+  PRODUCT
+  PROCEDURE
+}
+
+model Payment {
+  id          String   @id @default(cuid())
+  invoiceId   String
+  amount      Float
+  method      PaymentMethod
+  status      PaymentStatus
+  transactionRef String?
+  notes       String?
+  createdAt   DateTime @default(now())
+  
+  invoice     Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  
+  @@map("payments")
+}
+
+enum PaymentMethod {
+  CASH
+  CARD
+  CHECK
+  ONLINE
+  INSURANCE
+}
+
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REFUNDED
+}
+
+// Lab Orders
+model LabOrder {
+  id          String   @id @default(cuid())
+  visitId     String
+  labId       String?  // External lab ID
+  tests       Json     // Array of test codes/names
+  status      LabOrderStatus
+  orderedAt   DateTime @default(now())
+  resultsAt   DateTime?
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  visit       Visit    @relation(fields: [visitId], references: [id], onDelete: Cascade)
+  
+  results     LabResult[]
+  
+  @@map("lab_orders")
+}
+
+enum LabOrderStatus {
+  ORDERED
+  COLLECTED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+model LabResult {
+  id          String   @id @default(cuid())
+  labOrderId  String
+  test        String
+  result      String?
+  unit        String?
+  reference   String?
+  isAbnormal  Boolean?
+  notes       String?
+  fileUrl     String?  // URL to attached file
+  createdAt   DateTime @default(now())
+  
+  labOrder    LabOrder @relation(fields: [labOrderId], references: [id], onDelete: Cascade)
+  
+  @@map("lab_results")
+}
+
+// Reminders
+model Reminder {
+  id          String   @id @default(cuid())
+  petId       String
+  type        ReminderType
+  title       String
+  message     String?
+  triggerDate DateTime
+  dueDate     DateTime?
+  status      ReminderStatus
+  method      ReminderMethod
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  pet         Pet      @relation(fields: [petId], references: [id], onDelete: Cascade)
+  
+  @@map("reminders")
+}
+
+enum ReminderType {
+  VACCINATION
+  MEDICATION
+  CHECKUP
+  DENTAL
+  GROOMING
+  FOLLOW_UP
+}
+
+enum ReminderStatus {
+  PENDING
+  SENT
+  COMPLETED
+  CANCELLED
+}
+
+enum ReminderMethod {
+  SMS
+  EMAIL
+  PUSH
+  CALL
+}
+
+// Audit Trail
+model AuditLog {
+  id          String   @id @default(cuid())
+  tenantId    String
+  actorId     String?  // User who performed the action
+  action      String   // Action performed
+  targetType  String   // Type of object affected
+  targetId    String?  // ID of object affected
+  metadata    Json?    // Additional data
+  ipAddress   String?
+  userAgent   String?
+  createdAt   DateTime @default(now())
+  
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  actor       User?    @relation(fields: [actorId], references: [id])
+  
+  @@map("audit_logs")
+}
