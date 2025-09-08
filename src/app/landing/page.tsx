@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -24,7 +25,34 @@ import {
 } from "lucide-react"
 
 export default function LandingPage() {
+  const router = useRouter()
   const [selectedPlan, setSelectedPlan] = useState("professional")
+
+  const handleGetStarted = () => {
+    router.push("/register")
+  }
+
+  const handleSignIn = () => {
+    router.push("/login")
+  }
+
+  const handleStartFreeTrial = () => {
+    router.push("/register")
+  }
+
+  const handleScheduleDemo = () => {
+    // In a real app, this would open a calendar or contact form
+    router.push("/contact")
+  }
+
+  const handleContactSales = () => {
+    router.push("/contact")
+  }
+
+  const handleGetStartedPlan = (planId: string) => {
+    setSelectedPlan(planId)
+    router.push("/register")
+  }
 
   const features = [
     {
@@ -179,8 +207,8 @@ export default function LandingPage() {
               <a href="#testimonials" className="text-gray-600 hover:text-gray-900">Testimonials</a>
             </div>
             <div className="flex items-center space-x-4">
-              <Button variant="ghost">Sign In</Button>
-              <Button>Get Started</Button>
+              <Button variant="ghost" onClick={handleSignIn}>Sign In</Button>
+              <Button onClick={handleGetStarted}>Get Started</Button>
             </div>
           </div>
         </div>
@@ -201,11 +229,11 @@ export default function LandingPage() {
             Streamline appointments, patient care, billing, and inventory—all in one place.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button size="lg" className="text-lg px-8">
+            <Button size="lg" className="text-lg px-8" onClick={handleStartFreeTrial}>
               Start Free Trial
               <ArrowRight className="ml-2 h-5 w-5" />
             </Button>
-            <Button size="lg" variant="outline" className="text-lg px-8">
+            <Button size="lg" variant="outline" className="text-lg px-8" onClick={handleScheduleDemo}>
               Schedule Demo
             </Button>
           </div>
@@ -327,7 +355,7 @@ export default function LandingPage() {
                 <Button 
                   className={`w-full ${plan.popular ? 'bg-blue-600' : ''}`}
                   variant={plan.popular ? 'default' : 'outline'}
-                  onClick={() => setSelectedPlan(plan.id)}
+                  onClick={() => handleGetStartedPlan(plan.id)}
                 >
                   Get Started
                 </Button>
@@ -381,10 +409,10 @@ export default function LandingPage() {
             Join thousands of veterinary professionals who trust PetClinic Pro
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button size="lg" variant="secondary" className="text-lg px-8">
+            <Button size="lg" variant="secondary" className="text-lg px-8" onClick={handleStartFreeTrial}>
               Start Free Trial
             </Button>
-            <Button size="lg" variant="outline" className="text-lg px-8 border-white text-white hover:bg-white hover:text-blue-600">
+            <Button size="lg" variant="outline" className="text-lg px-8 border-white text-white hover:bg-white hover:text-blue-600" onClick={handleContactSales}>
               Contact Sales
             </Button>
           </div>

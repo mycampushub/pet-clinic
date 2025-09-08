@@ -1,8 +1,7 @@
 "use client"
 
-import { useSession, useState, useEffect } from "next-auth/react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { signOut } from "next-auth/react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -34,6 +33,7 @@ import {
   Pill
 } from "lucide-react"
 import Link from "next/link"
+import { useAuth } from "@/lib/auth-context"
 
 interface Appointment {
   id: string
@@ -99,7 +99,7 @@ interface DashboardStats {
 type UserRole = "RECEPTIONIST" | "VETERINARIAN" | "VET_TECH" | "PHARMACIST" | "MANAGER" | "ADMIN" | "OWNER"
 
 export default function Dashboard() {
-  const { data: session, status } = useSession()
+  const { user, logout, isLoading: authLoading } = useAuth()
   const router = useRouter()
   const [activeTab, setActiveTab] = useState("overview")
   const [appointments, setAppointments] = useState<Appointment[]>([])
@@ -119,17 +119,17 @@ export default function Dashboard() {
 
   // Redirect to login if not authenticated
   useEffect(() => {
-    if (status === "unauthenticated") {
-      router.push("/auth/login")
+    if (!authLoading && !user) {
+      router.push("/login")
     }
-  }, [status, router])
+  }, [user, authLoading, router])
 
   // Fetch dashboard data
   useEffect(() => {
-    if (session) {
+    if (user) {
       fetchDashboardData()
     }
-  }, [session])
+  }, [user])
 
   const fetchDashboardData = async () => {
     try {
@@ -189,7 +189,7 @@ export default function Dashboard() {
     }
   }
 
-  if (status === "loading" || loading) {
+  if (authLoading || loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
@@ -197,12 +197,12 @@ export default function Dashboard() {
     )
   }
 
-  if (!session) {
+  if (!user) {
     return null // Will redirect to login
   }
 
-  const userRole = session.user.role as UserRole
-  const userName = session.user.name
+  const userRole = user.role as UserRole
+  const userName = user.name
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -243,7 +243,32 @@ export default function Dashboard() {
   }
 
   const handleLogout = () => {
-    signOut({ callbackUrl: "/auth/login" })
+    logout()
+    router.push("/login")
+  }
+
+  const handleNewAppointment = () => {
+    router.push("/appointments/new")
+  }
+
+  const handleViewAppointment = (appointmentId: string) => {
+    router.push(`/appointments/${appointmentId}`)
+  }
+
+  const handleNewSoapNote = () => {
+    router.push("/medical/soap/new")
+  }
+
+  const handlePrescribeMedication = () => {
+    router.push("/pharmacy/prescribe")
+  }
+
+  const handleOrderLabTest = () => {
+    router.push("/laboratory/orders/new")
+  }
+
+  const handleViewNotifications = () => {
+    router.push("/notifications")
   }
 
   const formatTime = (dateString: string) => {
@@ -271,7 +296,7 @@ export default function Dashboard() {
             <div className="text-sm text-muted-foreground">{getRoleDisplayName(userRole)}</div>
           </div>
         </div>
-        <Button variant="outline" size="sm">
+        <Button variant="outline" size="sm" onClick={handleViewNotifications}>
           <Bell className="h-4 w-4 mr-2" />
           Notifications
         </Button>
@@ -344,7 +369,7 @@ export default function Dashboard() {
               <CardTitle>Today's Schedule</CardTitle>
               <CardDescription>Upcoming appointments and check-ins</CardDescription>
             </div>
-            <Button>
+            <Button onClick={handleNewAppointment}>
               <Plus className="h-4 w-4 mr-2" />
               New Appointment
             </Button>
@@ -375,7 +400,7 @@ export default function Dashboard() {
                     <div className="text-sm text-muted-foreground">
                       {appointment.provider.name}
                     </div>
-                    <Button size="sm" variant="outline">
+                    <Button size="sm" variant="outline" onClick={() => handleViewAppointment(appointment.id)}>
                       View Details
                     </Button>
                   </div>
@@ -431,15 +456,15 @@ export default function Dashboard() {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
-            <Button className="w-full justify-start">
+            <Button className="w-full justify-start" onClick={handleNewSoapNote}>
               <FileText className="h-4 w-4 mr-2" />
               New SOAP Note
             </Button>
-            <Button variant="outline" className="w-full justify-start">
+            <Button variant="outline" className="w-full justify-start" onClick={handlePrescribeMedication}>
               <Pill className="h-4 w-4 mr-2" />
               Prescribe Medication
             </Button>
-            <Button variant="outline" className="w-full justify-start">
+            <Button variant="outline" className="w-full justify-start" onClick={handleOrderLabTest}>
               <Package className="h-4 w-4 mr-2" />
               Order Lab Test
             </Button>
@@ -560,7 +585,7 @@ export default function Dashboard() {
               <CardTitle>Today's Appointments</CardTitle>
               <CardDescription>Manage your clinic's schedule</CardDescription>
             </div>
-            <Button>
+            <Button onClick={handleNewAppointment}>
               <Plus className="h-4 w-4 mr-2" />
               New Appointment
             </Button>

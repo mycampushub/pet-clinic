@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Separator } from "@/components/ui/separator"
+import { PaymentForm } from "./payment-form"
 import { 
   FileText, 
   DollarSign, 
@@ -75,6 +76,7 @@ export function BillingInterface() {
   const [invoiceStatus, setInvoiceStatus] = useState<"DRAFT" | "PENDING" | "PAID">("PENDING")
   const [paymentMethod, setPaymentMethod] = useState<"CASH" | "CARD" | "CHECK" | "ONLINE">("CARD")
   const [paymentAmount, setPaymentAmount] = useState(0)
+  const [showStripeForm, setShowStripeForm] = useState(false)
 
   // Sample data
   const currentInvoice: Invoice = {
@@ -161,8 +163,23 @@ export function BillingInterface() {
   }
 
   const handleProcessPayment = () => {
+    if (paymentMethod === "ONLINE") {
+      setShowStripeForm(true)
+      return
+    }
     console.log("Processing payment:", { method: paymentMethod, amount: paymentAmount })
-    // Process payment logic
+    // Process payment logic for other methods
+  }
+
+  const handlePaymentSuccess = () => {
+    setShowStripeForm(false)
+    // Refresh invoice data or show success message
+    console.log("Payment successful!")
+  }
+
+  const handlePaymentError = (error: string) => {
+    console.error("Payment failed:", error)
+    // Show error message to user
   }
 
   const handleSaveInvoice = () => {
@@ -457,6 +474,18 @@ export function BillingInterface() {
                       Process Payment
                     </Button>
                   </div>
+                  
+                  {showStripeForm && (
+                    <div className="mt-6">
+                      <Separator className="my-4" />
+                      <PaymentForm
+                        amount={paymentAmount || currentInvoice.balanceDue}
+                        invoiceId={currentInvoice.id}
+                        onSuccess={handlePaymentSuccess}
+                        onError={handlePaymentError}
+                      />
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </TabsContent>

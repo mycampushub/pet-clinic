@@ -74,6 +74,8 @@ model User {
   appointments Appointment[]
   prescriptions Prescription[]
   auditLogs   AuditLog[]
+  videoConsultations VideoConsultation[]
+  labOrders    LabOrder[]
   
   @@map("users")
 }
@@ -133,6 +135,8 @@ model Pet {
   appointments Appointment[]
   prescriptions Prescription[]
   reminders    Reminder[]
+  videoConsultations VideoConsultation[]
+  labOrders    LabOrder[]
   
   @@map("pets")
 }
@@ -161,6 +165,7 @@ model Appointment {
   provider      User     @relation(fields: [providerId], references: [id])
   
   visits        Visit[]
+  videoConsultation VideoConsultation?
   
   @@map("appointments")
 }
@@ -437,20 +442,27 @@ enum PaymentStatus {
 
 // Lab Orders
 model LabOrder {
-  id          String   @id @default(cuid())
-  visitId     String
-  labId       String?  // External lab ID
-  tests       Json     // Array of test codes/names
-  status      LabOrderStatus
-  orderedAt   DateTime @default(now())
-  resultsAt   DateTime?
-  notes       String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id             String   @id @default(cuid())
+  visitId        String
+  petId          String
+  veterinarianId String
+  labSystemId    String
+  externalOrderId String?
+  tests          Json     // Array of test codes/names
+  status         LabOrderStatus
+  orderedAt      DateTime @default(now())
+  collectedAt    DateTime?
+  resultsAt      DateTime?
+  notes          String?
+  priority       String   // ROUTINE, STAT, ASAP
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
   
-  visit       Visit    @relation(fields: [visitId], references: [id], onDelete: Cascade)
+  visit          Visit    @relation(fields: [visitId], references: [id], onDelete: Cascade)
+  pet            Pet      @relation(fields: [petId], references: [id])
+  veterinarian   User     @relation(fields: [veterinarianId], references: [id])
   
-  results     LabResult[]
+  results        LabResult[]
   
   @@map("lab_orders")
 }
@@ -464,18 +476,18 @@ enum LabOrderStatus {
 }
 
 model LabResult {
-  id          String   @id @default(cuid())
-  labOrderId  String
-  test        String
-  result      String?
-  unit        String?
-  reference   String?
-  isAbnormal  Boolean?
-  notes       String?
-  fileUrl     String?  // URL to attached file
-  createdAt   DateTime @default(now())
+  id           String   @id @default(cuid())
+  labOrderId   String
+  test         String
+  result       String?
+  unit         String?
+  reference    String?
+  isAbnormal   Boolean?
+  notes        String?
+  fileUrl      String?  // URL to attached file
+  receivedAt   DateTime @default(now())
   
-  labOrder    LabOrder @relation(fields: [labOrderId], references: [id], onDelete: Cascade)
+  labOrder     LabOrder @relation(fields: [labOrderId], references: [id], onDelete: Cascade)
   
   @@map("lab_results")
 }
@@ -539,4 +551,44 @@ model AuditLog {
   actor       User?    @relation(fields: [actorId], references: [id])
   
   @@map("audit_logs")
+}
+
+// Notification Log
+model NotificationLog {
+  id        String   @id @default(cuid())
+  type      String   // EMAIL, SMS, PUSH
+  recipient String   // Email address or phone number
+  subject   String?
+  message   String
+  status    String   // SENT, FAILED, PENDING
+  error     String?
+  createdAt DateTime @default(now())
+  
+  @@map("notification_logs")
+}
+
+// Video Consultation
+model VideoConsultation {
+  id             String   @id @default(cuid())
+  appointmentId  String   @unique
+  petId          String
+  ownerId        String
+  veterinarianId String
+  scheduledAt    DateTime
+  duration       Int      // in minutes
+  status         String   // SCHEDULED, IN_PROGRESS, COMPLETED, CANCELLED, FAILED
+  roomUrl        String?
+  recordingUrl   String?
+  notes          String?
+  diagnosis      String?
+  treatment      String?
+  prescription   String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  
+  appointment    Appointment @relation(fields: [appointmentId], references: [id])
+  pet            Pet         @relation(fields: [petId], references: [id])
+  veterinarian   User        @relation(fields: [veterinarianId], references: [id])
+  
+  @@map("video_consultations")
 }

@@ -18,8 +18,19 @@ interface AuthContextType {
   user: User | null
   login: (email: string, password: string) => Promise<boolean>
   logout: () => void
+  register: (data: RegisterData) => Promise<boolean>
   hasPermission: (permission: string) => boolean
   isLoading: boolean
+}
+
+interface RegisterData {
+  email: string
+  password: string
+  name: string
+  clinicName: string
+  phone?: string
+  address?: string
+  subscriptionPlan: "starter" | "professional" | "enterprise"
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -110,6 +121,15 @@ const ROLE_PERMISSIONS: Record<UserRole, string[]> = {
 const MOCK_USERS: User[] = [
   {
     id: "1",
+    email: "demo@petclinic.com",
+    name: "Demo User",
+    role: "MANAGER",
+    clinicId: "clinic-1",
+    tenantId: "tenant-1",
+    isActive: true
+  },
+  {
+    id: "2",
     email: "reception@petclinic.com",
     name: "Sarah Johnson",
     role: "RECEPTIONIST",
@@ -118,7 +138,7 @@ const MOCK_USERS: User[] = [
     isActive: true
   },
   {
-    id: "2",
+    id: "3",
     email: "vet@petclinic.com",
     name: "Dr. Michael Smith",
     role: "VETERINARIAN",
@@ -127,7 +147,7 @@ const MOCK_USERS: User[] = [
     isActive: true
   },
   {
-    id: "3",
+    id: "4",
     email: "tech@petclinic.com",
     name: "Emily Davis",
     role: "VET_TECH",
@@ -136,7 +156,7 @@ const MOCK_USERS: User[] = [
     isActive: true
   },
   {
-    id: "4",
+    id: "5",
     email: "pharmacy@petclinic.com",
     name: "James Wilson",
     role: "PHARMACIST",
@@ -145,7 +165,7 @@ const MOCK_USERS: User[] = [
     isActive: true
   },
   {
-    id: "5",
+    id: "6",
     email: "manager@petclinic.com",
     name: "Lisa Anderson",
     role: "MANAGER",
@@ -154,10 +174,19 @@ const MOCK_USERS: User[] = [
     isActive: true
   },
   {
-    id: "6",
+    id: "7",
     email: "admin@petclinic.com",
     name: "System Admin",
     role: "ADMIN",
+    tenantId: "tenant-1",
+    isActive: true
+  },
+  {
+    id: "7",
+    email: "demo@petclinic.com",
+    name: "Demo User",
+    role: "MANAGER",
+    clinicId: "clinic-1",
     tenantId: "tenant-1",
     isActive: true
   }
@@ -200,6 +229,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return false
   }
 
+  const register = async (data: RegisterData): Promise<boolean> => {
+    setIsLoading(true)
+    
+    // Simulate API call
+    await new Promise(resolve => setTimeout(resolve, 1500))
+    
+    // Create new user (in real app, this would be an API call)
+    const newUser: User = {
+      id: Date.now().toString(),
+      email: data.email,
+      name: data.name,
+      role: "MANAGER", // First user is always a manager
+      clinicId: "clinic-" + Date.now(),
+      tenantId: "tenant-" + Date.now(),
+      isActive: true
+    }
+    
+    // Add to mock users (in real app, this would be handled by backend)
+    MOCK_USERS.push(newUser)
+    
+    // Auto-login after registration
+    setUser(newUser)
+    localStorage.setItem("petclinic_user", JSON.stringify(newUser))
+    
+    setIsLoading(false)
+    return true
+  }
+
   const logout = () => {
     setUser(null)
     localStorage.removeItem("petclinic_user")
@@ -222,6 +279,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       user,
       login,
       logout,
+      register,
       hasPermission,
       isLoading
     }}>
