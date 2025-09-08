@@ -2,6 +2,8 @@
 
 import { useState } from "react"
 import Link from "next/link"
+import { signIn } from "next-auth/react"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -16,17 +18,38 @@ export default function LoginPage() {
   const [password, setPassword] = useState("")
   const [rememberMe, setRememberMe] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState("")
+  const router = useRouter()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
+    setError("")
     
-    // Simulate API call
-    setTimeout(() => {
+    try {
+      const result = await signIn("credentials", {
+        email,
+        password,
+        redirect: false,
+      })
+
+      if (result?.error) {
+        setError("Invalid email or password")
+      } else {
+        // Redirect to dashboard
+        router.push("/dashboard")
+        router.refresh()
+      }
+    } catch (error) {
+      setError("An error occurred. Please try again.")
+    } finally {
       setIsLoading(false)
-      // Redirect to dashboard or role selection
-      window.location.href = "/dashboard"
-    }, 1000)
+    }
+  }
+
+  const handleDemoLogin = (demoEmail: string) => {
+    setEmail(demoEmail)
+    setPassword("demo123")
   }
 
   return (
@@ -115,29 +138,62 @@ export default function LoginPage() {
               <Button type="submit" className="w-full" disabled={isLoading}>
                 {isLoading ? "Signing in..." : "Sign In"}
               </Button>
+
+              {error && (
+                <div className="text-red-600 text-sm text-center bg-red-50 p-2 rounded">
+                  {error}
+                </div>
+              )}
             </form>
 
-            {/* Quick Access Options */}
+            {/* Demo Accounts */}
             <div className="mt-6">
               <div className="relative">
                 <div className="absolute inset-0 flex items-center">
                   <div className="w-full border-t border-gray-300"></div>
                 </div>
                 <div className="relative flex justify-center text-sm">
-                  <span className="px-2 bg-white text-gray-500">Or continue with</span>
+                  <span className="px-2 bg-white text-gray-500">Demo Accounts</span>
                 </div>
               </div>
 
-              <div className="mt-4 grid grid-cols-2 gap-3">
-                <Button variant="outline" className="w-full">
-                  <Building className="h-4 w-4 mr-2" />
-                  Clinic
+              <div className="mt-4 space-y-2">
+                <Button
+                  variant="outline"
+                  className="w-full justify-start text-sm"
+                  onClick={() => handleDemoLogin("reception@petclinic.com")}
+                >
+                  <Mail className="h-4 w-4 mr-2" />
+                  Receptionist: reception@petclinic.com
                 </Button>
-                <Button variant="outline" className="w-full">
+                <Button
+                  variant="outline"
+                  className="w-full justify-start text-sm"
+                  onClick={() => handleDemoLogin("vet@petclinic.com")}
+                >
                   <User className="h-4 w-4 mr-2" />
-                  Staff
+                  Veterinarian: vet@petclinic.com
+                </Button>
+                <Button
+                  variant="outline"
+                  className="w-full justify-start text-sm"
+                  onClick={() => handleDemoLogin("manager@petclinic.com")}
+                >
+                  <Building className="h-4 w-4 mr-2" />
+                  Manager: manager@petclinic.com
+                </Button>
+                <Button
+                  variant="outline"
+                  className="w-full justify-start text-sm"
+                  onClick={() => handleDemoLogin("admin@petclinic.com")}
+                >
+                  <User className="h-4 w-4 mr-2" />
+                  Admin: admin@petclinic.com
                 </Button>
               </div>
+              <p className="text-xs text-gray-500 mt-2 text-center">
+                Use password: <code className="bg-gray-100 px-1 rounded">demo123</code>
+              </p>
             </div>
 
             {/* Sign Up Link */}
