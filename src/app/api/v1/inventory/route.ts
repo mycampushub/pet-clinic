@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/app/api/auth/[...nextauth]/route"
-import { PrismaClient } from "@prisma/client"
-
-const prisma = new PrismaClient()
+import { db } from "@/lib/db"
 
 export async function GET(request: NextRequest) {
   try {
@@ -15,6 +13,12 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url)
     const clinicId = session.user.clinicId
+    
+    // Validate that user has a clinic assigned
+    if (!clinicId) {
+      return NextResponse.json({ error: "User is not assigned to any clinic" }, { status: 403 })
+    }
+    
     const category = searchParams.get("category")
     const lowStock = searchParams.get("lowStock") === "true"
     const expiring = searchParams.get("expiring") === "true"
@@ -32,7 +36,7 @@ export async function GET(request: NextRequest) {
 
     if (lowStock) {
       whereClause.quantity = {
-        lte: prisma.inventoryItem.fields.reorderPoint
+        lte: db.inventoryItem.fields.reorderPoint
       }
     }
 
@@ -47,7 +51,7 @@ export async function GET(request: NextRequest) {
       whereClause.isControlled = true
     }
 
-    const inventory = await prisma.inventoryItem.findMany({
+    const inventory = await db.inventoryItem.findMany({
       where: whereClause,
       include: {
         medication: {
@@ -101,7 +105,7 @@ export async function POST(request: NextRequest) {
 
     // If medicationId is provided, verify it exists
     if (medicationId) {
-      const medication = await prisma.medication.findUnique({
+      const medication = await db.medication.findUnique({
         where: { id: medicationId }
       })
 
@@ -115,7 +119,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Schedule is required for controlled substances" }, { status: 400 })
     }
 
-    const inventoryItem = await prisma.inventoryItem.create({
+    const inventoryItem = await db.inventoryItem.create({
       data: {
         name,
         description,

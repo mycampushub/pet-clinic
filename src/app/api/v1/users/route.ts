@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/app/api/auth/[...nextauth]/route"
-import { PrismaClient } from "@prisma/client"
-
-const prisma = new PrismaClient()
+import { db } from "@/lib/db"
 
 export async function GET(request: NextRequest) {
   try {
@@ -34,7 +32,7 @@ export async function GET(request: NextRequest) {
       whereClause.role = role
     }
 
-    const users = await prisma.user.findMany({
+    const users = await db.user.findMany({
       where: whereClause,
       include: {
         clinic: {
@@ -90,7 +88,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if user already exists
-    const existingUser = await prisma.user.findUnique({
+    const existingUser = await db.user.findUnique({
       where: { email }
     })
 
@@ -111,7 +109,7 @@ export async function POST(request: NextRequest) {
 
     // If clinicId is provided, verify it exists and belongs to the same tenant
     if (clinicId) {
-      const clinic = await prisma.clinic.findUnique({
+      const clinic = await db.clinic.findUnique({
         where: { id: clinicId }
       })
 
@@ -124,7 +122,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    const user = await prisma.user.create({
+    const user = await db.user.create({
       data: {
         email,
         name,

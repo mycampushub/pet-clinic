@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -126,12 +126,15 @@ export default function Dashboard() {
 
   // Fetch dashboard data
   useEffect(() => {
-    if (user) {
+    if (user && user.clinicId) {
       fetchDashboardData()
     }
-  }, [user])
+  }, [user?.id, user?.clinicId, fetchDashboardData]) // Include fetchDashboardData in dependencies
 
-  const fetchDashboardData = async () => {
+  const fetchDashboardData = useCallback(async () => {
+    // Prevent multiple concurrent calls
+    if (loading) return
+    
     try {
       setLoading(true)
       
@@ -141,6 +144,8 @@ export default function Dashboard() {
       if (appointmentsResponse.ok) {
         const appointmentsData = await appointmentsResponse.json()
         setAppointments(appointmentsData)
+      } else {
+        console.error("Failed to fetch appointments:", appointmentsResponse.status)
       }
 
       // Fetch pets
@@ -148,6 +153,8 @@ export default function Dashboard() {
       if (petsResponse.ok) {
         const petsData = await petsResponse.json()
         setPets(petsData)
+      } else {
+        console.error("Failed to fetch pets:", petsResponse.status)
       }
 
       // Fetch users
@@ -155,6 +162,8 @@ export default function Dashboard() {
       if (usersResponse.ok) {
         const usersData = await usersResponse.json()
         setUsers(usersData)
+      } else {
+        console.error("Failed to fetch users:", usersResponse.status)
       }
 
       // Fetch inventory
@@ -162,6 +171,8 @@ export default function Dashboard() {
       if (inventoryResponse.ok) {
         const inventoryData = await inventoryResponse.json()
         setInventory(inventoryData)
+      } else {
+        console.error("Failed to fetch inventory:", inventoryResponse.status)
       }
 
       // Calculate stats
@@ -184,10 +195,12 @@ export default function Dashboard() {
 
     } catch (error) {
       console.error("Error fetching dashboard data:", error)
+      // Set loading to false even if there's an error to prevent infinite loading
+      setLoading(false)
     } finally {
       setLoading(false)
     }
-  }
+  }, [loading]) // Add loading as dependency
 
   if (authLoading || loading) {
     return (

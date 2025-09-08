@@ -90,6 +90,7 @@ async function main() {
       email: 'admin@petclinic.com',
       name: 'System Admin',
       role: 'ADMIN',
+      clinicId: clinic.id,
       tenantId: tenant.id
     }
   ]
@@ -302,6 +303,98 @@ async function main() {
       where: { id: inventoryData.id },
       update: {},
       create: inventoryData
+    })
+  }
+
+  // Create sample appointments
+  const appointments = [
+    {
+      id: 'apt-1',
+      petId: 'pet-1',
+      ownerId: 'owner-1',
+      clinicId: clinic.id,
+      providerId: 'user-2', // Dr. Michael Smith
+      serviceCode: 'ANNUAL_EXAM',
+      title: 'Annual Checkup',
+      description: 'Regular annual examination and vaccinations',
+      startTime: new Date('2025-06-18T09:00:00'),
+      endTime: new Date('2025-06-18T09:30:00'),
+      duration: 30,
+      status: 'SCHEDULED',
+      source: 'PHONE',
+      notes: 'Patient is due for rabies vaccination'
+    },
+    {
+      id: 'apt-2',
+      petId: 'pet-2',
+      ownerId: 'owner-2',
+      clinicId: clinic.id,
+      providerId: 'user-2', // Dr. Michael Smith
+      serviceCode: 'VACCINATION',
+      title: 'Vaccination Visit',
+      description: 'FVRCP vaccination',
+      startTime: new Date('2025-06-18T10:00:00'),
+      endTime: new Date('2025-06-18T10:15:00'),
+      duration: 15,
+      status: 'SCHEDULED',
+      source: 'ONLINE',
+      notes: 'First vaccination in series'
+    },
+    {
+      id: 'apt-3',
+      petId: 'pet-3',
+      ownerId: 'owner-3',
+      clinicId: clinic.id,
+      providerId: 'user-3', // Emily Davis
+      serviceCode: 'DENTAL_CLEANING',
+      title: 'Dental Cleaning',
+      description: 'Routine dental cleaning and oral health check',
+      startTime: new Date('2025-06-18T11:00:00'),
+      endTime: new Date('2025-06-18T12:00:00'),
+      duration: 60,
+      status: 'SCHEDULED',
+      source: 'STAFF',
+      notes: 'Patient requires pre-anesthetic blood work'
+    },
+    {
+      id: 'apt-4',
+      petId: 'pet-1',
+      ownerId: 'owner-1',
+      clinicId: clinic.id,
+      providerId: 'user-2', // Dr. Michael Smith
+      serviceCode: 'FOLLOW_UP',
+      title: 'Post-Surgery Follow-up',
+      description: 'Follow-up visit after recent surgery',
+      startTime: new Date('2025-06-18T14:00:00'),
+      endTime: new Date('2025-06-18T14:30:00'),
+      duration: 30,
+      status: 'SCHEDULED',
+      source: 'STAFF',
+      notes: 'Check incision site and remove stitches if needed'
+    },
+    {
+      id: 'apt-5',
+      petId: 'pet-2',
+      ownerId: 'owner-2',
+      clinicId: clinic.id,
+      providerId: 'user-3', // Emily Davis
+      serviceCode: 'GROOMING',
+      title: 'Grooming Session',
+      description: 'Routine grooming and nail trim',
+      startTime: new Date('2025-06-18T15:00:00'),
+      endTime: new Date('2025-06-18T15:45:00'),
+      duration: 45,
+      status: 'SCHEDULED',
+      source: 'PHONE',
+      notes: 'Patient is anxious during grooming, may need mild sedation'
+    }
+  ]
+
+  for (const appointmentData of appointments) {
+    await prisma.appointment.upsert({
+      where: { id: appointmentData.id },
+      update: {},
+      create: appointmentData
     })
   }
 

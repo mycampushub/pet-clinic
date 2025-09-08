@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/app/api/auth/[...nextauth]/route"
-import { PrismaClient } from "@prisma/client"
-
-const prisma = new PrismaClient()
+import { db } from "@/lib/db"
 
 export async function GET(request: NextRequest) {
   try {
@@ -16,6 +14,12 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     const tenantId = session.user.tenantId
     const clinicId = searchParams.get("clinicId") || session.user.clinicId
+    
+    // Validate that user has a clinic assigned
+    if (!clinicId) {
+      return NextResponse.json({ error: "User is not assigned to any clinic" }, { status: 403 })
+    }
+    
     const ownerId = searchParams.get("ownerId")
     const query = searchParams.get("query")
 
@@ -41,7 +45,7 @@ export async function GET(request: NextRequest) {
       ]
     }
 
-    const pets = await prisma.pet.findMany({
+    const pets = await db.pet.findMany({
       where: whereClause,
       include: {
         owner: {
@@ -101,7 +105,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if owner exists
-    const owner = await prisma.owner.findUnique({
+    const owner = await db.owner.findUnique({
       where: { id: ownerId }
     })
 
@@ -109,7 +113,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Owner not found" }, { status: 404 })
     }
 
-    const pet = await prisma.pet.create({
+    const pet = await db.pet.create({
       data: {
         name,
         species,

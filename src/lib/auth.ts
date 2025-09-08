@@ -1,8 +1,6 @@
 import NextAuth, { type DefaultSession } from "next-auth"
 import CredentialsProvider from "next-auth/providers/credentials"
-import { PrismaClient } from "@prisma/client"
-
-const prisma = new PrismaClient()
+import { db } from "@/lib/db"
 
 // Extend the session type to include our custom fields
 declare module "next-auth" {
@@ -48,7 +46,7 @@ export const authOptions = {
         }
 
         try {
-          const user = await prisma.user.findUnique({
+          const user = await db.user.findUnique({
             where: {
               email: credentials.email
             },
@@ -94,8 +92,8 @@ export const authOptions = {
       if (user) {
         token.role = user.role
         token.tenantId = user.tenantId
-        token.clinicId = user.clinicId
-        token.permissions = user.permissions
+        token.clinicId = user.clinicId || null
+        token.permissions = user.permissions || []
       }
       return token
     },
@@ -104,8 +102,8 @@ export const authOptions = {
         session.user.id = token.sub!
         session.user.role = token.role as string
         session.user.tenantId = token.tenantId as string
-        session.user.clinicId = token.clinicId as string
-        session.user.permissions = token.permissions as string[]
+        session.user.clinicId = token.clinicId as string || null
+        session.user.permissions = token.permissions as string[] || []
       }
       return session
     }

@@ -8,7 +8,7 @@ interface User {
   email: string
   name: string
   role: UserRole
-  clinicId?: string
+  clinicId: string | null
   tenantId: string
   isActive: boolean
   permissions?: string[]
@@ -123,7 +123,7 @@ export function useAuth(): AuthContextType {
     email: session.user.email || "",
     name: session.user.name || "",
     role: (session.user as any).role as UserRole || "RECEPTIONIST",
-    clinicId: (session.user as any).clinicId,
+    clinicId: (session.user as any).clinicId || null,
     tenantId: (session.user as any).tenantId || "",
     isActive: true,
     permissions: (session.user as any).permissions || []

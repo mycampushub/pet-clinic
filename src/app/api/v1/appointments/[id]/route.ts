@@ -2,7 +2,10 @@ import { NextRequest, NextResponse } from "next/server"
 import { getValidatedSession } from "@/lib/session-utils"
 import { db } from "@/lib/db"
 
-export async function GET(request: NextRequest) {
+export async function GET(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
   try {
     const validatedSession = await getValidatedSession()
     
@@ -10,49 +13,13 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { searchParams } = new URL(request.url)
-    const clinicId = validatedSession.clinicId
-    const providerId = searchParams.get("providerId")
-    const date = searchParams.get("date")
-    const status = searchParams.get("status")
-    const startDate = searchParams.get("startDate")
-    const endDate = searchParams.get("endDate")
+    console.log("Fetching appointment:", params.id, "for clinic:", validatedSession.clinicId)
 
-    console.log("Fetching appointments for clinic:", clinicId, "date:", date)
-
-    // Build where clause
-    let whereClause: any = {
-      clinicId: clinicId
-    }
-
-    if (providerId) {
-      whereClause.providerId = providerId
-    }
-
-    if (date) {
-      const targetDate = new Date(date)
-      const nextDay = new Date(targetDate)
-      nextDay.setDate(nextDay.getDate() + 1)
-      
-      whereClause.startTime = {
-        gte: targetDate,
-        lt: nextDay
-      }
-    }
-
-    if (startDate && endDate) {
-      whereClause.startTime = {
-        gte: new Date(startDate),
-        lte: new Date(endDate)
-      }
-    }
-
-    if (status) {
-      whereClause.status = status
-    }
-
-    const appointments = await db.appointment.findMany({
-      where: whereClause,
+    const appointment = await db.appointment.findUnique({
+      where: { 
+        id: params.id,
+        clinicId: validatedSession.clinicId 
+      },
       include: {
         pet: {
           include: {
@@ -85,20 +52,24 @@ export async function GET(request: NextRequest) {
             status: true
           }
         }
-      },
-      orderBy: {
-        startTime: "asc"
       }
     })
 
-    return NextResponse.json(appointments)
+    if (!appointment) {
+      return NextResponse.json({ error: "Appointment not found" }, { status: 404 })
+    }
+
+    return NextResponse.json(appointment)
   } catch (error) {
-    console.error("Error fetching appointments:", error)
+    console.error("Error fetching appointment:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }
 
-export async function POST(request: NextRequest) {
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
   try {
     const validatedSession = await getValidatedSession()
     
@@ -106,17 +77,29 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    // Check if user has permission to create appointments
-    const canCreateAppointments = ["RECEPTIONIST", "VETERINARIAN", "VET_TECH", "MANAGER", "ADMIN"].includes(validatedSession.user.role)
-    if (!canCreateAppointments) {
-      console.log("User lacks permission to create appointments:", validatedSession.user.role)
+    // Check if user has permission to update appointments
+    const canUpdateAppointments = ["RECEPTIONIST", "VETERINARIAN", "VET_TECH", "MANAGER", "ADMIN"].includes(validatedSession.user.role)
+    if (!canUpdateAppointments) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 })
     }
 
     const body = await request.json()
-    const { petId, providerId, serviceCode, title, description, startTime, endTime, duration, notes, source } = body
+    const { petId, providerId, serviceCode, title, description, startTime, endTime, duration, status, notes } = body
 
-    console.log("Creating appointment for clinic:", validatedSession.clinicId, "by user:", validatedSession.user.email)
+    console.log("Updating appointment:", params.id, "for clinic:", validatedSession.clinicId, "by user:", validatedSession.user.email)
+
+    // Check if appointment exists and belongs to the same clinic
+    const existingAppointment = await db.appointment.findUnique({
+      where: { id: params.id }
+    })
+
+    if (!existingAppointment) {
+      return NextResponse.json({ error: "Appointment not found" }, { status: 404 })
+    }
+
+    if (existingAppointment.clinicId !== validatedSession.clinicId) {
+      return NextResponse.json({ error: "Appointment does not belong to your clinic" }, { status: 403 })
+    }
 
     // Validate required fields
     if (!petId || !providerId || !startTime || !endTime || !serviceCode) {
@@ -150,12 +133,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Provider does not belong to your clinic" }, { status: 403 })
     }
 
-    // Check for scheduling conflicts
+    // Check for scheduling conflicts (excluding current appointment)
     const conflictingAppointments = await db.appointment.findMany({
       where: {
         providerId,
         clinicId: validatedSession.clinicId,
         status: { notIn: ["CANCELLED"] },
+        id: { not: params.id },
         OR: [
           {
             AND: [
@@ -183,11 +167,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Scheduling conflict: provider already has an appointment during this time" }, { status: 409 })
     }
 
-    const appointment = await db.appointment.create({
+    const appointment = await db.appointment.update({
+      where: { id: params.id },
       data: {
         petId,
         ownerId: pet.ownerId,
-        clinicId: validatedSession.clinicId,
         providerId,
         serviceCode,
         title: title || serviceCode,
@@ -195,8 +179,7 @@ export async function POST(request: NextRequest) {
         startTime: new Date(startTime),
         endTime: new Date(endTime),
         duration: duration || Math.round((new Date(endTime).getTime() - new Date(startTime).getTime()) / 60000),
-        status: "SCHEDULED",
-        source: source || "STAFF",
+        status: status || existingAppointment.status,
         notes
       },
       include: {
@@ -222,9 +205,52 @@ export async function POST(request: NextRequest) {
       }
     })
 
-    return NextResponse.json(appointment, { status: 201 })
+    return NextResponse.json(appointment)
   } catch (error) {
-    console.error("Error creating appointment:", error)
+    console.error("Error updating appointment:", error)
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+  }
+}
+
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const validatedSession = await getValidatedSession()
+    
+    if (!validatedSession) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
+    // Check if user has permission to delete appointments
+    const canDeleteAppointments = ["RECEPTIONIST", "VETERINARIAN", "VET_TECH", "MANAGER", "ADMIN"].includes(validatedSession.user.role)
+    if (!canDeleteAppointments) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+    }
+
+    console.log("Deleting appointment:", params.id, "for clinic:", validatedSession.clinicId, "by user:", validatedSession.user.email)
+
+    // Check if appointment exists and belongs to the same clinic
+    const existingAppointment = await db.appointment.findUnique({
+      where: { id: params.id }
+    })
+
+    if (!existingAppointment) {
+      return NextResponse.json({ error: "Appointment not found" }, { status: 404 })
+    }
+
+    if (existingAppointment.clinicId !== validatedSession.clinicId) {
+      return NextResponse.json({ error: "Appointment does not belong to your clinic" }, { status: 403 })
+    }
+
+    await db.appointment.delete({
+      where: { id: params.id }
+    })
+
+    return NextResponse.json({ message: "Appointment deleted successfully" })
+  } catch (error) {
+    console.error("Error deleting appointment:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }
