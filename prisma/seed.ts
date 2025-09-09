@@ -1,5 +1,4 @@
 import { PrismaClient } from '@prisma/client'
-import bcrypt from 'bcryptjs'
 
 const prisma = new PrismaClient()
 
@@ -10,7 +9,7 @@ async function main() {
     update: {},
     create: {
       id: 'tenant-1',
-      name: 'PetClinic Pro Demo',
+      name: 'PetClinic Pro',
       settings: {
         currency: 'USD',
         timezone: 'UTC',
@@ -26,10 +25,10 @@ async function main() {
     create: {
       id: 'clinic-1',
       tenantId: tenant.id,
-      name: 'Happy Paws Veterinary Clinic',
+      name: 'Veterinary Clinic',
       address: '123 Main St, Anytown, ST 12345',
       phone: '(555) 123-4567',
-      email: 'info@happypaws.com',
+      email: 'info@vetclinic.com',
       timezone: 'America/New_York',
       hours: {
         monday: '9:00 AM - 6:00 PM',
@@ -43,161 +42,7 @@ async function main() {
     }
   })
 
-  // Create demo users
-  const users = [
-    {
-      id: 'user-1',
-      email: 'reception@petclinic.com',
-      name: 'Sarah Johnson',
-      role: 'RECEPTIONIST',
-      clinicId: clinic.id,
-      tenantId: tenant.id
-    },
-    {
-      id: 'user-2',
-      email: 'vet@petclinic.com',
-      name: 'Dr. Michael Smith',
-      role: 'VETERINARIAN',
-      clinicId: clinic.id,
-      tenantId: tenant.id
-    },
-    {
-      id: 'user-3',
-      email: 'tech@petclinic.com',
-      name: 'Emily Davis',
-      role: 'VET_TECH',
-      clinicId: clinic.id,
-      tenantId: tenant.id
-    },
-    {
-      id: 'user-4',
-      email: 'pharmacy@petclinic.com',
-      name: 'James Wilson',
-      role: 'PHARMACIST',
-      clinicId: clinic.id,
-      tenantId: tenant.id
-    },
-    {
-      id: 'user-5',
-      email: 'manager@petclinic.com',
-      name: 'Lisa Anderson',
-      role: 'MANAGER',
-      clinicId: clinic.id,
-      tenantId: tenant.id
-    },
-    {
-      id: 'user-6',
-      email: 'admin@petclinic.com',
-      name: 'System Admin',
-      role: 'ADMIN',
-      clinicId: clinic.id,
-      tenantId: tenant.id
-    }
-  ]
-
-  for (const userData of users) {
-    await prisma.user.upsert({
-      where: { email: userData.email },
-      update: {},
-      create: {
-        ...userData,
-        // Hash the password for demo users
-        password: await bcrypt.hash('demo123', 12),
-        isActive: true,
-        permissions: []
-      }
-    })
-  }
-
-  // Create sample owners
-  const owners = [
-    {
-      id: 'owner-1',
-      name: 'John Doe',
-      email: 'john.doe@email.com',
-      phone: '(555) 123-4567',
-      address: '123 Main St, Anytown, ST 12345',
-      emergencyContact: 'Jane Doe - (555) 987-6543',
-      notes: 'Prefers morning appointments'
-    },
-    {
-      id: 'owner-2',
-      name: 'Jane Smith',
-      email: 'jane.smith@email.com',
-      phone: '(555) 234-5678',
-      address: '456 Oak Ave, Somewhere, ST 67890',
-      emergencyContact: 'Bob Smith - (555) 876-5432'
-    },
-    {
-      id: 'owner-3',
-      name: 'Bob Wilson',
-      email: 'bob.wilson@email.com',
-      phone: '(555) 345-6789',
-      address: '789 Pine Rd, Nowhere, ST 13579'
-    }
-  ]
-
-  for (const ownerData of owners) {
-    await prisma.owner.upsert({
-      where: { id: ownerData.id },
-      update: {},
-      create: ownerData
-    })
-  }
-
-  // Create sample pets
-  const pets = [
-    {
-      id: 'pet-1',
-      name: 'Rex',
-      species: 'Dog',
-      breed: 'Labrador Retriever',
-      dob: new Date('2019-03-15'),
-      microchip: '985141000123456',
-      sex: 'Male',
-      isNeutered: true,
-      weight: 32.5,
-      color: 'Golden',
-      ownerId: 'owner-1',
-      clinicId: clinic.id
-    },
-    {
-      id: 'pet-2',
-      name: 'Luna',
-      species: 'Cat',
-      breed: 'Domestic Shorthair',
-      dob: new Date('2021-06-10'),
-      sex: 'Female',
-      isNeutered: true,
-      weight: 4.2,
-      color: 'Gray',
-      ownerId: 'owner-2',
-      clinicId: clinic.id
-    },
-    {
-      id: 'pet-3',
-      name: 'Max',
-      species: 'Dog',
-      breed: 'German Shepherd',
-      dob: new Date('2017-11-20'),
-      sex: 'Male',
-      isNeutered: false,
-      weight: 38.0,
-      color: 'Black and Tan',
-      ownerId: 'owner-3',
-      clinicId: clinic.id
-    }
-  ]
-
-  for (const petData of pets) {
-    await prisma.pet.upsert({
-      where: { id: petData.id },
-      update: {},
-      create: petData
-    })
-  }
-
-  // Create sample medications
+  // Create sample medications (for inventory)
   const medications = [
     {
       id: 'med-1',
@@ -223,14 +68,6 @@ async function main() {
       schedule: 'NON_CONTROLLED',
       strength: '1ml',
       unit: 'vials'
-    },
-    {
-      id: 'med-4',
-      name: 'Tramadol 50mg',
-      description: 'Controlled pain medication',
-      schedule: 'SCHEDULE_4',
-      strength: '50mg',
-      unit: 'tablets'
     }
   ]
 
@@ -242,163 +79,8 @@ async function main() {
     })
   }
 
-  // Create sample inventory items
-  const inventoryItems = [
-    {
-      id: 'inv-1',
-      medicationId: 'med-1',
-      name: 'Amoxicillin 250mg',
-      description: 'Antibiotic capsules',
-      category: 'Medication',
-      quantity: 50,
-      unit: 'capsules',
-      lotNumber: 'AMX-2024-001',
-      expiryDate: new Date('2025-06-15'),
-      reorderPoint: 20,
-      cost: 0.50,
-      price: 2.50,
-      location: 'Cabinet A-1',
-      isControlled: false,
-      clinicId: clinic.id
-    },
-    {
-      id: 'inv-2',
-      medicationId: 'med-2',
-      name: 'Pain Relief Syrup',
-      description: 'Analgesic for dogs and cats',
-      category: 'Medication',
-      quantity: 25,
-      unit: 'bottles',
-      lotNumber: 'PR-2024-002',
-      expiryDate: new Date('2024-12-22'),
-      reorderPoint: 10,
-      cost: 8.00,
-      price: 15.00,
-      location: 'Cabinet B-2',
-      isControlled: false,
-      clinicId: clinic.id
-    },
-    {
-      id: 'inv-3',
-      medicationId: 'med-4',
-      name: 'Tramadol 50mg',
-      description: 'Controlled pain medication',
-      category: 'Medication',
-      quantity: 30,
-      unit: 'tablets',
-      lotNumber: 'TRM-2024-004',
-      expiryDate: new Date('2025-09-30'),
-      reorderPoint: 15,
-      cost: 0.75,
-      price: 3.00,
-      location: 'Controlled Cabinet',
-      isControlled: true,
-      schedule: 'SCHEDULE_4',
-      clinicId: clinic.id
-    }
-  ]
-
-  for (const inventoryData of inventoryItems) {
-    await prisma.inventoryItem.upsert({
-      where: { id: inventoryData.id },
-      update: {},
-      create: inventoryData
-    })
-  }
-
-  // Create sample appointments
-  const appointments = [
-    {
-      id: 'apt-1',
-      petId: 'pet-1',
-      ownerId: 'owner-1',
-      clinicId: clinic.id,
-      providerId: 'user-2', // Dr. Michael Smith
-      serviceCode: 'ANNUAL_EXAM',
-      title: 'Annual Checkup',
-      description: 'Regular annual examination and vaccinations',
-      startTime: new Date('2025-06-18T09:00:00'),
-      endTime: new Date('2025-06-18T09:30:00'),
-      duration: 30,
-      status: 'SCHEDULED',
-      source: 'PHONE',
-      notes: 'Patient is due for rabies vaccination'
-    },
-    {
-      id: 'apt-2',
-      petId: 'pet-2',
-      ownerId: 'owner-2',
-      clinicId: clinic.id,
-      providerId: 'user-2', // Dr. Michael Smith
-      serviceCode: 'VACCINATION',
-      title: 'Vaccination Visit',
-      description: 'FVRCP vaccination',
-      startTime: new Date('2025-06-18T10:00:00'),
-      endTime: new Date('2025-06-18T10:15:00'),
-      duration: 15,
-      status: 'SCHEDULED',
-      source: 'ONLINE',
-      notes: 'First vaccination in series'
-    },
-    {
-      id: 'apt-3',
-      petId: 'pet-3',
-      ownerId: 'owner-3',
-      clinicId: clinic.id,
-      providerId: 'user-3', // Emily Davis
-      serviceCode: 'DENTAL_CLEANING',
-      title: 'Dental Cleaning',
-      description: 'Routine dental cleaning and oral health check',
-      startTime: new Date('2025-06-18T11:00:00'),
-      endTime: new Date('2025-06-18T12:00:00'),
-      duration: 60,
-      status: 'SCHEDULED',
-      source: 'STAFF',
-      notes: 'Patient requires pre-anesthetic blood work'
-    },
-    {
-      id: 'apt-4',
-      petId: 'pet-1',
-      ownerId: 'owner-1',
-      clinicId: clinic.id,
-      providerId: 'user-2', // Dr. Michael Smith
-      serviceCode: 'FOLLOW_UP',
-      title: 'Post-Surgery Follow-up',
-      description: 'Follow-up visit after recent surgery',
-      startTime: new Date('2025-06-18T14:00:00'),
-      endTime: new Date('2025-06-18T14:30:00'),
-      duration: 30,
-      status: 'SCHEDULED',
-      source: 'STAFF',
-      notes: 'Check incision site and remove stitches if needed'
-    },
-    {
-      id: 'apt-5',
-      petId: 'pet-2',
-      ownerId: 'owner-2',
-      clinicId: clinic.id,
-      providerId: 'user-3', // Emily Davis
-      serviceCode: 'GROOMING',
-      title: 'Grooming Session',
-      description: 'Routine grooming and nail trim',
-      startTime: new Date('2025-06-18T15:00:00'),
-      endTime: new Date('2025-06-18T15:45:00'),
-      duration: 45,
-      status: 'SCHEDULED',
-      source: 'PHONE',
-      notes: 'Patient is anxious during grooming, may need mild sedation'
-    }
-  ]
-
-  for (const appointmentData of appointments) {
-    await prisma.appointment.upsert({
-      where: { id: appointmentData.id },
-      update: {},
-      create: appointmentData
-    })
-  }
-
   console.log('Database seeded successfully!')
+  console.log('No demo users created - please register a new account to get started.')
 }
 
 main()

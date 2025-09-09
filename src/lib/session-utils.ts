@@ -27,6 +27,7 @@ export async function getValidatedSession(): Promise<ValidatedSession | null> {
 
     const user = session.user as any
     
+    // Check if user has clinicId assigned
     if (!user.clinicId) {
       console.log("User has no clinicId assigned:", user.email || user.id)
       return null

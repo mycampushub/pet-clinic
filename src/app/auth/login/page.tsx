@@ -47,11 +47,6 @@ export default function LoginPage() {
     }
   }
 
-  const handleDemoLogin = (demoEmail: string) => {
-    setEmail(demoEmail)
-    setPassword("demo123")
-  }
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50 flex items-center justify-center p-4">
       {/* Background Pattern */}
@@ -145,56 +140,6 @@ export default function LoginPage() {
                 </div>
               )}
             </form>
-
-            {/* Demo Accounts */}
-            <div className="mt-6">
-              <div className="relative">
-                <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-gray-300"></div>
-                </div>
-                <div className="relative flex justify-center text-sm">
-                  <span className="px-2 bg-white text-gray-500">Demo Accounts</span>
-                </div>
-              </div>
-
-              <div className="mt-4 space-y-2">
-                <Button
-                  variant="outline"
-                  className="w-full justify-start text-sm"
-                  onClick={() => handleDemoLogin("reception@petclinic.com")}
-                >
-                  <Mail className="h-4 w-4 mr-2" />
-                  Receptionist: reception@petclinic.com
-                </Button>
-                <Button
-                  variant="outline"
-                  className="w-full justify-start text-sm"
-                  onClick={() => handleDemoLogin("vet@petclinic.com")}
-                >
-                  <User className="h-4 w-4 mr-2" />
-                  Veterinarian: vet@petclinic.com
-                </Button>
-                <Button
-                  variant="outline"
-                  className="w-full justify-start text-sm"
-                  onClick={() => handleDemoLogin("manager@petclinic.com")}
-                >
-                  <Building className="h-4 w-4 mr-2" />
-                  Manager: manager@petclinic.com
-                </Button>
-                <Button
-                  variant="outline"
-                  className="w-full justify-start text-sm"
-                  onClick={() => handleDemoLogin("admin@petclinic.com")}
-                >
-                  <User className="h-4 w-4 mr-2" />
-                  Admin: admin@petclinic.com
-                </Button>
-              </div>
-              <p className="text-xs text-gray-500 mt-2 text-center">
-                Use password: <code className="bg-gray-100 px-1 rounded">demo123</code>
-              </p>
-            </div>
 
             {/* Sign Up Link */}
             <div className="mt-6 text-center">

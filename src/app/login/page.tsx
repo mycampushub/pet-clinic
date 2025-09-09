@@ -27,6 +27,9 @@ export default function LoginPage() {
     setIsLoading(true)
 
     try {
+      // Clear any existing session before login
+      await fetch('/api/auth/signout', { method: 'POST' })
+      
       const success = await login(email, password)
       
       if (success) {
@@ -138,25 +141,6 @@ export default function LoginPage() {
                 >
                   Sign up for free
                 </Link>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Demo Credentials */}
-        <Card className="mt-6">
-          <CardContent className="pt-6">
-            <div className="text-center">
-              <h3 className="font-medium text-gray-900 mb-2">Demo Credentials</h3>
-              <div className="text-sm text-gray-600 space-y-1">
-                <p><strong>Receptionist:</strong> reception@petclinic.com / demo123</p>
-                <p><strong>Veterinarian:</strong> vet@petclinic.com / demo123</p>
-                <p><strong>Vet Tech:</strong> tech@petclinic.com / demo123</p>
-                <p><strong>Manager:</strong> manager@petclinic.com / demo123</p>
-                <p><strong>Admin:</strong> admin@petclinic.com / demo123</p>
-                <p className="text-xs text-gray-500 mt-2">
-                  Use these credentials to explore the platform
-                </p>
               </div>
             </div>
           </CardContent>

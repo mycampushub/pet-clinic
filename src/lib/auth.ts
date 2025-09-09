@@ -1,6 +1,7 @@
 import NextAuth, { type DefaultSession } from "next-auth"
 import CredentialsProvider from "next-auth/providers/credentials"
 import { db } from "@/lib/db"
+import bcrypt from "bcryptjs"
 
 // Extend the session type to include our custom fields
 declare module "next-auth" {
@@ -60,8 +61,8 @@ export const authOptions = {
             return null
           }
 
-          // Simple password check for demo - in production, use bcrypt
-          const isPasswordValid = credentials.password === "demo123"
+          // Proper password validation with bcrypt
+          const isPasswordValid = await bcrypt.compare(credentials.password, user.password)
 
           if (!isPasswordValid) {
             return null
@@ -92,7 +93,7 @@ export const authOptions = {
       if (user) {
         token.role = user.role
         token.tenantId = user.tenantId
-        token.clinicId = user.clinicId || null
+        token.clinicId = user.clinicId
         token.permissions = user.permissions || []
       }
       return token

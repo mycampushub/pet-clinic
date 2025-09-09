@@ -1,6 +1,7 @@
 "use client"
 
 import { useSession, signIn, signOut } from "next-auth/react"
+import { useRouter } from "next/navigation"
 import { UserRole } from "@/types/auth"
 
 interface User {
@@ -198,6 +199,7 @@ export function withAuth<P extends object>(
 ) {
   return function AuthenticatedComponent(props: P) {
     const { user, hasPermission, isLoading } = useAuth()
+    const router = useRouter()
 
     if (isLoading) {
       return (
@@ -208,8 +210,8 @@ export function withAuth<P extends object>(
     }
 
     if (!user) {
-      // Redirect to login instead of rendering the login page component
-      window.location.href = "/login"
+      // Use Next.js router for better navigation
+      router.push("/login")
       return null
     }
 
@@ -223,6 +225,8 @@ export function withAuth<P extends object>(
 
 // Unauthorized Page Component
 export function UnauthorizedPage() {
+  const router = useRouter()
+  
   return (
     <div className="min-h-screen flex items-center justify-center">
       <div className="text-center">
@@ -232,7 +236,7 @@ export function UnauthorizedPage() {
           You don't have permission to access this resource.
         </p>
         <button
-          onClick={() => window.location.href = "/dashboard"}
+          onClick={() => router.push("/dashboard")}
           className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
         >
           Go to Dashboard

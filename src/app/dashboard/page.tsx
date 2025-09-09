@@ -121,17 +121,22 @@ export default function Dashboard() {
   useEffect(() => {
     if (!authLoading && !user) {
       router.push("/login")
+    } else if (user && !user.clinicId) {
+      // If user has no clinicId, redirect to a setup page or show error
+      console.error("User has no clinicId assigned:", user.email)
+      // For now, redirect to login with an error message
+      router.push("/login?error=no_clinic")
     }
   }, [user, authLoading, router])
 
   // Fetch dashboard data
   useEffect(() => {
-    if (user && user.clinicId) {
+    if (user && user.clinicId && !loading) {
       fetchDashboardData()
     }
-  }, [user?.id, user?.clinicId, fetchDashboardData]) // Include fetchDashboardData in dependencies
+  }, [user?.id, user?.clinicId, loading]) // Add loading to dependencies
 
-  const fetchDashboardData = useCallback(async () => {
+  const fetchDashboardData = async () => {
     // Prevent multiple concurrent calls
     if (loading) return
     
@@ -195,12 +200,10 @@ export default function Dashboard() {
 
     } catch (error) {
       console.error("Error fetching dashboard data:", error)
-      // Set loading to false even if there's an error to prevent infinite loading
-      setLoading(false)
     } finally {
       setLoading(false)
     }
-  }, [loading]) // Add loading as dependency
+  }
 
   if (authLoading || loading) {
     return (
@@ -934,17 +937,10 @@ export default function Dashboard() {
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              <div className="text-sm">
-                <div className="font-medium">User Login: reception@petclinic.com</div>
-                <div className="text-muted-foreground">2 minutes ago</div>
-              </div>
-              <div className="text-sm">
-                <div className="font-medium">Appointment Created: Rex - Annual Checkup</div>
-                <div className="text-muted-foreground">15 minutes ago</div>
-              </div>
-              <div className="text-sm">
-                <div className="font-medium">New User Registered: Emily Davis</div>
-                <div className="text-muted-foreground">1 hour ago</div>
+              <div className="text-center text-muted-foreground">
+                <Activity className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                <p>No recent activity to display</p>
+                <p className="text-xs">Activity will appear here as you use the system</p>
               </div>
             </div>
           </CardContent>
