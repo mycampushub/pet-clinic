@@ -2,6 +2,36 @@
 import { UserRole, PetGender, VisitType, VisitStatus, PrescriptionStatus, InvoiceStatus, PaymentStatus, LabStatus, ReminderType, ReminderStatus } from '@prisma/client'
 
 // Mock data types
+interface MockTenant {
+  id: string
+  name: string
+  slug: string
+  domain?: string
+  settings?: any
+  isActive: boolean
+  createdAt: Date
+  updatedAt: Date
+}
+
+interface MockClinic {
+  id: string
+  tenantId: string
+  name: string
+  address: string
+  city: string
+  state: string
+  zipCode: string
+  country: string
+  phone: string
+  email?: string
+  website?: string
+  timezone: string
+  isActive: boolean
+  settings?: any
+  createdAt: Date
+  updatedAt: Date
+}
+
 interface MockUser {
   id: string
   tenantId: string
@@ -131,6 +161,114 @@ interface MockInventoryItem {
 }
 
 // Mock data storage
+let mockTenants: MockTenant[] = [
+  {
+    id: 'tenant-1',
+    name: 'PetClinic Pro Demo',
+    slug: 'petclinic-pro',
+    domain: 'petclinic-pro.demo.com',
+    settings: { theme: 'default', currency: 'USD', language: 'en' },
+    isActive: true,
+    createdAt: new Date('2024-01-01'),
+    updatedAt: new Date('2024-01-01')
+  },
+  {
+    id: 'tenant-2',
+    name: 'Happy Paws Veterinary',
+    slug: 'happy-paws',
+    domain: 'happypaws.vet',
+    settings: { theme: 'blue', currency: 'USD', language: 'en' },
+    isActive: true,
+    createdAt: new Date('2024-02-01'),
+    updatedAt: new Date('2024-02-01')
+  },
+  {
+    id: 'tenant-3',
+    name: 'City Animal Hospital',
+    slug: 'city-animal-hospital',
+    domain: 'cityanimal.com',
+    settings: { theme: 'green', currency: 'USD', language: 'en' },
+    isActive: true,
+    createdAt: new Date('2024-03-01'),
+    updatedAt: new Date('2024-03-01')
+  }
+]
+
+let mockClinics: MockClinic[] = [
+  {
+    id: 'clinic-1',
+    tenantId: 'tenant-1',
+    name: 'Main Street Veterinary Clinic',
+    address: '123 Main St',
+    city: 'Anytown',
+    state: 'CA',
+    zipCode: '12345',
+    country: 'US',
+    phone: '+1-555-0123',
+    email: 'info@mainstreetvet.com',
+    website: 'https://mainstreetvet.com',
+    timezone: 'America/Los_Angeles',
+    isActive: true,
+    settings: { capacity: 20, operatingHours: '9AM-6PM' },
+    createdAt: new Date('2024-01-01'),
+    updatedAt: new Date('2024-01-01')
+  },
+  {
+    id: 'clinic-2',
+    tenantId: 'tenant-1',
+    name: 'Downtown Pet Care',
+    address: '456 Oak Ave',
+    city: 'Somewhere',
+    state: 'CA',
+    zipCode: '12346',
+    country: 'US',
+    phone: '+1-555-0124',
+    email: 'contact@downtownpet.com',
+    website: 'https://downtownpet.com',
+    timezone: 'America/Los_Angeles',
+    isActive: true,
+    settings: { capacity: 15, operatingHours: '8AM-7PM' },
+    createdAt: new Date('2024-01-15'),
+    updatedAt: new Date('2024-01-15')
+  },
+  {
+    id: 'clinic-3',
+    tenantId: 'tenant-2',
+    name: 'Happy Paws Main Clinic',
+    address: '789 Pine St',
+    city: 'Elsewhere',
+    state: 'NY',
+    zipCode: '10001',
+    country: 'US',
+    phone: '+1-555-0125',
+    email: 'info@happypaws.com',
+    website: 'https://happypaws.com',
+    timezone: 'America/New_York',
+    isActive: true,
+    settings: { capacity: 25, operatingHours: '8AM-8PM' },
+    createdAt: new Date('2024-02-01'),
+    updatedAt: new Date('2024-02-01')
+  },
+  {
+    id: 'clinic-4',
+    tenantId: 'tenant-3',
+    name: 'City Animal Hospital - Downtown',
+    address: '321 Elm St',
+    city: 'Big City',
+    state: 'TX',
+    zipCode: '75001',
+    country: 'US',
+    phone: '+1-555-0126',
+    email: 'downtown@cityanimal.com',
+    website: 'https://cityanimal.com',
+    timezone: 'America/Chicago',
+    isActive: true,
+    settings: { capacity: 30, operatingHours: '24/7' },
+    createdAt: new Date('2024-03-01'),
+    updatedAt: new Date('2024-03-01')
+  }
+]
+
 let mockUsers: MockUser[] = [
   {
     id: 'user-1',
@@ -176,6 +314,36 @@ let mockUsers: MockUser[] = [
     isActive: true,
     createdAt: new Date('2024-01-01'),
     updatedAt: new Date('2024-01-01')
+  },
+  {
+    id: 'user-4',
+    tenantId: 'tenant-2',
+    clinicId: 'clinic-3',
+    email: 'vet@happypaws.com',
+    emailVerified: true,
+    password: '$2a$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LeZeUfkZMBs9kYZP6', // password123
+    firstName: 'Emily',
+    lastName: 'Brown',
+    phone: '+1-555-0201',
+    role: UserRole.VETERINARIAN,
+    isActive: true,
+    createdAt: new Date('2024-02-01'),
+    updatedAt: new Date('2024-02-01')
+  },
+  {
+    id: 'user-5',
+    tenantId: 'tenant-3',
+    clinicId: 'clinic-4',
+    email: 'vet@cityanimal.com',
+    emailVerified: true,
+    password: '$2a$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LeZeUfkZMBs9kYZP6', // password123
+    firstName: 'David',
+    lastName: 'Wilson',
+    phone: '+1-555-0301',
+    role: UserRole.VETERINARIAN,
+    isActive: true,
+    createdAt: new Date('2024-03-01'),
+    updatedAt: new Date('2024-03-01')
   }
 ]
 
@@ -680,6 +848,110 @@ export class MockDatabase {
       newPatients: 0, // Mock data
       revenueToday: revenueToday
     }
+  }
+
+  // Tenant operations
+  async findTenants(): Promise<MockTenant[]> {
+    return mockTenants.filter(tenant => tenant.isActive)
+  }
+
+  async findTenantById(id: string): Promise<MockTenant | null> {
+    return mockTenants.find(tenant => tenant.id === id && tenant.isActive) || null
+  }
+
+  async findTenantBySlug(slug: string): Promise<MockTenant | null> {
+    return mockTenants.find(tenant => tenant.slug === slug && tenant.isActive) || null
+  }
+
+  async createTenant(tenantData: Omit<MockTenant, 'id' | 'createdAt' | 'updatedAt'>): Promise<MockTenant> {
+    const newTenant: MockTenant = {
+      ...tenantData,
+      id: `tenant-${Date.now()}`,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    }
+    mockTenants.push(newTenant)
+    return newTenant
+  }
+
+  async updateTenant(id: string, updateData: Partial<MockTenant>): Promise<MockTenant | null> {
+    const tenantIndex = mockTenants.findIndex(tenant => tenant.id === id && tenant.isActive)
+    if (tenantIndex === -1) return null
+    
+    mockTenants[tenantIndex] = {
+      ...mockTenants[tenantIndex],
+      ...updateData,
+      updatedAt: new Date()
+    }
+    return mockTenants[tenantIndex]
+  }
+
+  async deleteTenant(id: string): Promise<boolean> {
+    const tenantIndex = mockTenants.findIndex(tenant => tenant.id === id)
+    if (tenantIndex === -1) return false
+    
+    mockTenants[tenantIndex].isActive = false
+    mockTenants[tenantIndex].updatedAt = new Date()
+    return true
+  }
+
+  // Clinic operations
+  async findClinics(tenantId?: string): Promise<MockClinic[]> {
+    let clinics = mockClinics.filter(clinic => clinic.isActive)
+    if (tenantId) {
+      clinics = clinics.filter(clinic => clinic.tenantId === tenantId)
+    }
+    return clinics
+  }
+
+  async findClinicById(id: string): Promise<MockClinic | null> {
+    return mockClinics.find(clinic => clinic.id === id && clinic.isActive) || null
+  }
+
+  async findClinicsByTenant(tenantId: string): Promise<MockClinic[]> {
+    return mockClinics.filter(clinic => clinic.tenantId === tenantId && clinic.isActive)
+  }
+
+  async createClinic(clinicData: Omit<MockClinic, 'id' | 'createdAt' | 'updatedAt'>): Promise<MockClinic> {
+    const newClinic: MockClinic = {
+      ...clinicData,
+      id: `clinic-${Date.now()}`,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    }
+    mockClinics.push(newClinic)
+    return newClinic
+  }
+
+  async updateClinic(id: string, updateData: Partial<MockClinic>): Promise<MockClinic | null> {
+    const clinicIndex = mockClinics.findIndex(clinic => clinic.id === id && clinic.isActive)
+    if (clinicIndex === -1) return null
+    
+    mockClinics[clinicIndex] = {
+      ...mockClinics[clinicIndex],
+      ...updateData,
+      updatedAt: new Date()
+    }
+    return mockClinics[clinicIndex]
+  }
+
+  async deleteClinic(id: string): Promise<boolean> {
+    const clinicIndex = mockClinics.findIndex(clinic => clinic.id === id)
+    if (clinicIndex === -1) return false
+    
+    mockClinics[clinicIndex].isActive = false
+    mockClinics[clinicIndex].updatedAt = new Date()
+    return true
+  }
+
+  // Helper method to get users by tenant
+  async findUsersByTenant(tenantId: string): Promise<MockUser[]> {
+    return mockUsers.filter(user => user.tenantId === tenantId && user.isActive)
+  }
+
+  // Helper method to get users by clinic
+  async findUsersByClinic(clinicId: string): Promise<MockUser[]> {
+    return mockUsers.filter(user => user.clinicId === clinicId && user.isActive)
   }
 }
 

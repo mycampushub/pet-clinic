@@ -20,6 +20,7 @@ import {
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import { TenantClinicSelector } from "@/tenant-clinic-selector"
 
 const navigation = [
   { name: "Dashboard", href: "/dashboard", icon: Home },
@@ -67,6 +68,11 @@ export function SidebarNav({ className }: SidebarNavProps) {
               <Heart className="h-8 w-8 text-blue-600" />
               <span className="text-xl font-bold text-gray-900">PetClinic Pro</span>
             </Link>
+          </div>
+
+          {/* Tenant & Clinic Selector */}
+          <div className="px-4 py-4 border-b">
+            <TenantClinicSelector />
           </div>
 
           {/* Navigation */}

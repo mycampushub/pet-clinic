@@ -106,7 +106,7 @@ export async function GET(request: NextRequest) {
         ])
 
         const completedAppointments = allAppointments.filter(apt => apt.status === 'COMPLETED')
-        const paidInvoices = allInvoices.filter(inv => inv.paymentStatus === 'PAID')
+        const paidInvoicesOverview = allInvoices.filter(inv => inv.paymentStatus === 'PAID')
 
         reportData = {
           appointments: {
@@ -117,8 +117,8 @@ export async function GET(request: NextRequest) {
             total: allPatients.length
           },
           revenue: {
-            totalInvoices: paidInvoices.length,
-            totalRevenue: paidInvoices.reduce((sum, inv) => sum + inv.total, 0)
+            totalInvoices: paidInvoicesOverview.length,
+            totalRevenue: paidInvoicesOverview.reduce((sum, inv) => sum + inv.total, 0)
           },
           inventory: {
             totalItems: (await mockDb.findInventory(tenantId)).length

@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { TenantSwitcher } from "@/components/tenant-switcher"
 import { 
   Calendar, 
   Heart, 
@@ -398,6 +399,7 @@ export default function Dashboard() {
               <h1 className="text-2xl font-bold text-gray-900">PetClinic Pro</h1>
             </div>
             <div className="flex items-center space-x-4">
+              <TenantSwitcher />
               <Badge variant="outline">
                 {session?.user?.role?.replace('_', ' ')}
               </Badge>

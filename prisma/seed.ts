@@ -19,7 +19,7 @@ async function main() {
 
   // Create clinic
   const clinic = await prisma.clinic.upsert({
-    where: { name: 'Main Street Veterinary Clinic' },
+    where: { id: 'clinic-1' },
     update: {},
     create: {
       tenantId: tenant.id,
@@ -221,10 +221,10 @@ async function main() {
       objective: 'Patient alert and responsive. Body condition score 5/9. Mucous membranes pink and moist. Heart rate normal, lungs clear. Abdomen soft, no pain on palpation.',
       assessment: 'Healthy adult dog. No abnormalities detected on physical examination.',
       plan: '1. Continue current diet and exercise routine\n2. Administer DHPP and Rabies vaccines\n3. Recommend heartworm prevention\n4. Schedule next annual visit',
-      weight: '32.5',
-      temperature: '101.5',
-      heartRate: '120',
-      respiratoryRate: '24'
+      weight: 32.5,
+      temperature: 101.5,
+      heartRate: 120,
+      respiratoryRate: 24
     }
   })
 
