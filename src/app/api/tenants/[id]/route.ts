@@ -15,7 +15,7 @@ export async function GET(
     }
 
     // Only admin users can view tenant details
-    if (session.user.role !== 'ADMIN' && session.user.role !== 'MANAGER') {
+    if (session.user.role !== 'ADMIN' && session.user.role !== 'CLINIC_ADMIN') {
       return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 })
     }
 

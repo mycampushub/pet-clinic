@@ -136,7 +136,7 @@ export function TenantSwitcher({ className }: TenantSwitcherProps) {
   const currentTenant = tenants.find(t => t.id === selectedTenant)
   const currentClinic = clinics.find(c => c.id === selectedClinic)
 
-  if (!session || (session.user.role !== 'ADMIN' && session.user.role !== 'MANAGER')) {
+  if (!session || (session.user.role !== 'ADMIN' && session.user.role !== 'CLINIC_ADMIN')) {
     return null
   }
 

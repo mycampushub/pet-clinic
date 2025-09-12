@@ -78,141 +78,14 @@ export default function AppointmentsPage() {
         setAppointments(data)
         setFilteredAppointments(data)
       } else {
-        // Fallback to mock data if API fails
-        const mockAppointments: VisitWithDetails[] = [
-          {
-            id: "1",
-            tenantId: "1",
-            clinicId: "1",
-            petId: "1",
-            userId: "1",
-            visitType: "CONSULTATION",
-            status: "SCHEDULED",
-            scheduledAt: new Date("2024-09-15T09:00:00"),
-            reason: "Annual checkup and vaccination",
-            symptoms: null,
-            diagnosis: null,
-            treatment: null,
-            notes: null,
-            followUpRequired: false,
-            isActive: true,
-            createdAt: new Date(),
-            updatedAt: new Date(),
-            pet: {
-              id: "1",
-              tenantId: "1",
-              ownerId: "1",
-              name: "Max",
-              species: "Dog",
-              breed: "Golden Retriever",
-              gender: "MALE",
-              isNeutered: true,
-              dateOfBirth: new Date("2018-05-15"),
-              microchipId: "985141000123456",
-              color: "Golden",
-              weight: 32.5,
-              allergies: null,
-              chronicConditions: null,
-              notes: null,
-              isActive: true,
-              createdAt: new Date(),
-              updatedAt: new Date(),
-              owner: {
-                id: "1",
-                tenantId: "1",
-                firstName: "John",
-                lastName: "Smith",
-                email: "john.smith@email.com",
-                phone: "+1-555-0123",
-                address: "123 Main St",
-                city: "Anytown",
-                state: "CA",
-                zipCode: "12345",
-                country: "US",
-                emergencyContact: null,
-                notes: null,
-                isActive: true,
-                createdAt: new Date(),
-                updatedAt: new Date()
-              }
-            },
-            user: {
-              firstName: "Dr. Sarah",
-              lastName: "Johnson"
-            }
-          }
-        ]
-        setAppointments(mockAppointments)
-        setFilteredAppointments(mockAppointments)
+        console.error("Failed to fetch appointments")
+        setAppointments([])
+        setFilteredAppointments([])
       }
     } catch (error) {
       console.error("Error fetching appointments:", error)
-      // Fallback to mock data
-      const mockAppointments: VisitWithDetails[] = [
-        {
-          id: "1",
-          tenantId: "1",
-          clinicId: "1",
-          petId: "1",
-          userId: "1",
-          visitType: "CONSULTATION",
-          status: "SCHEDULED",
-          scheduledAt: new Date("2024-09-15T09:00:00"),
-          reason: "Annual checkup and vaccination",
-          symptoms: null,
-          diagnosis: null,
-          treatment: null,
-          notes: null,
-          followUpRequired: false,
-          isActive: true,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-          pet: {
-            id: "1",
-            tenantId: "1",
-            ownerId: "1",
-            name: "Max",
-            species: "Dog",
-            breed: "Golden Retriever",
-            gender: "MALE",
-            isNeutered: true,
-            dateOfBirth: new Date("2018-05-15"),
-            microchipId: "985141000123456",
-            color: "Golden",
-            weight: 32.5,
-            allergies: null,
-            chronicConditions: null,
-            notes: null,
-            isActive: true,
-            createdAt: new Date(),
-            updatedAt: new Date(),
-            owner: {
-              id: "1",
-              tenantId: "1",
-              firstName: "John",
-              lastName: "Smith",
-              email: "john.smith@email.com",
-              phone: "+1-555-0123",
-              address: "123 Main St",
-              city: "Anytown",
-              state: "CA",
-              zipCode: "12345",
-              country: "US",
-              emergencyContact: null,
-              notes: null,
-              isActive: true,
-              createdAt: new Date(),
-              updatedAt: new Date()
-            }
-          },
-          user: {
-            firstName: "Dr. Sarah",
-            lastName: "Johnson"
-          }
-        }
-      ]
-      setAppointments(mockAppointments)
-      setFilteredAppointments(mockAppointments)
+      setAppointments([])
+      setFilteredAppointments([])
     } finally {
       setLoading(false)
     }

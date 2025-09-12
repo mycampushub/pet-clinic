@@ -10,8 +10,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Only admin and manager users can switch tenants
-    if (session.user.role !== 'ADMIN' && session.user.role !== 'MANAGER') {
+    // Only admin and clinic admin users can switch tenants
+    if (session.user.role !== 'ADMIN' && session.user.role !== 'CLINIC_ADMIN') {
       return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 })
     }
 

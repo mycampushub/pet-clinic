@@ -54,155 +54,23 @@ export default function PetDetailPage() {
   const fetchPetDetails = async () => {
     setLoading(true)
     try {
-      // Mock data - replace with actual API calls
-      const mockPet: PetWithOwner = {
-        id: params.id as string,
-        tenantId: "1",
-        ownerId: "1",
-        name: "Max",
-        species: "Dog",
-        breed: "Golden Retriever",
-        gender: "MALE",
-        isNeutered: true,
-        dateOfBirth: new Date("2018-05-15"),
-        microchipId: "985141000123456",
-        color: "Golden",
-        weight: 32.5,
-        allergies: JSON.stringify(["Penicillin"]),
-        chronicConditions: JSON.stringify(["Arthritis"]),
-        notes: "Friendly dog, loves treats. Responds well to positive reinforcement. Has some anxiety during thunderstorms.",
-        isActive: true,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        owner: {
-          id: "1",
-          tenantId: "1",
-          firstName: "John",
-          lastName: "Smith",
-          email: "john.smith@email.com",
-          phone: "+1-555-0123",
-          address: "123 Main St",
-          city: "Anytown",
-          state: "CA",
-          zipCode: "12345",
-          country: "US",
-          emergencyContact: JSON.stringify({ name: "Jane Smith", phone: "+1-555-0124", relationship: "Spouse" }),
-          notes: "Regular client, prefers morning appointments. Very reliable.",
-          isActive: true,
-          createdAt: new Date(),
-          updatedAt: new Date()
-        }
+      const response = await fetch(`/api/patients/${params.id}`)
+      if (response.ok) {
+        const data = await response.json()
+        setPet(data.pet)
+        setVisits(data.visits || [])
+        setPrescriptions(data.prescriptions || [])
+        setLabOrders(data.labOrders || [])
+      } else {
+        throw new Error('Failed to fetch pet details')
       }
-
-      const mockVisits: VisitWithDetails[] = [
-        {
-          id: "1",
-          tenantId: "1",
-          clinicId: "1",
-          petId: params.id as string,
-          userId: "1",
-          visitType: "CONSULTATION",
-          status: "COMPLETED",
-          scheduledAt: new Date("2024-09-10T09:00:00"),
-          checkedInAt: new Date("2024-09-10T08:45:00"),
-          startedAt: new Date("2024-09-10T09:05:00"),
-          completedAt: new Date("2024-09-10T09:45:00"),
-          reason: "Annual checkup and vaccination",
-          symptoms: "None reported",
-          diagnosis: "Healthy",
-          treatment: "Annual vaccination administered",
-          notes: "Patient is in good health. Weight stable.",
-          followUpRequired: false,
-          isActive: true,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-          user: {
-            firstName: "Dr. Sarah",
-            lastName: "Johnson"
-          }
-        },
-        {
-          id: "2",
-          tenantId: "1",
-          clinicId: "1",
-          petId: params.id as string,
-          userId: "1",
-          visitType: "FOLLOW_UP",
-          status: "COMPLETED",
-          scheduledAt: new Date("2024-08-15T14:00:00"),
-          checkedInAt: new Date("2024-08-15T13:50:00"),
-          startedAt: new Date("2024-08-15T14:05:00"),
-          completedAt: new Date("2024-08-15T14:30:00"),
-          reason: "Follow-up for skin condition",
-          symptoms: "Itching and redness on belly",
-          diagnosis: "Allergic dermatitis",
-          treatment: "Prescribed antihistamine and medicated shampoo",
-          notes: "Condition improving. Continue current treatment.",
-          followUpRequired: true,
-          followUpDate: new Date("2024-09-01"),
-          isActive: true,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-          user: {
-            firstName: "Dr. Sarah",
-            lastName: "Johnson"
-          }
-        }
-      ]
-
-      const mockPrescriptions: Prescription[] = [
-        {
-          id: "1",
-          tenantId: "1",
-          visitId: "2",
-          medicationId: "1",
-          userId: "1",
-          petId: params.id as string,
-          dosage: "10mg",
-          frequency: "Twice daily",
-          duration: "14 days",
-          quantity: 28,
-          refills: 0,
-          instructions: "Give with food. Monitor for drowsiness.",
-          notes: "For allergic dermatitis",
-          status: "COMPLETED",
-          dispensedAt: new Date("2024-08-15"),
-          isActive: true,
-          createdAt: new Date(),
-          updatedAt: new Date()
-        }
-      ]
-
-      const mockLabOrders: LabOrder[] = [
-        {
-          id: "1",
-          tenantId: "1",
-          visitId: "1",
-          petId: params.id as string,
-          labProvider: "VetLab",
-          testType: "Blood Work",
-          tests: JSON.stringify(["CBC", "Chemistry Panel"]),
-          status: "COMPLETED",
-          requestedAt: new Date("2024-09-10"),
-          completedAt: new Date("2024-09-12"),
-          results: JSON.stringify({
-            cbc: "Within normal ranges",
-            chemistry: "All values normal",
-            notes: "No abnormalities detected"
-          }),
-          notes: "Annual blood work",
-          isActive: true,
-          createdAt: new Date(),
-          updatedAt: new Date()
-        }
-      ]
-
-      setPet(mockPet)
-      setVisits(mockVisits)
-      setPrescriptions(mockPrescriptions)
-      setLabOrders(mockLabOrders)
     } catch (error) {
       console.error("Error fetching pet details:", error)
+      // Set empty data on error
+      setPet(null)
+      setVisits([])
+      setPrescriptions([])
+      setLabOrders([])
     } finally {
       setLoading(false)
     }

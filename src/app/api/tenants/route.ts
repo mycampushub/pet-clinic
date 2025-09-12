@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Only admin users can view all tenants
-    if (session.user.role !== 'ADMIN' && session.user.role !== 'MANAGER') {
+    if (session.user.role !== 'ADMIN' && session.user.role !== 'CLINIC_ADMIN') {
       return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 })
     }
 

@@ -19,7 +19,8 @@ import {
   Menu,
   X,
   Shield,
-  Building2
+  Building2,
+  Plug
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -42,13 +43,15 @@ const getNavigationForRole = (role: UserRole) => {
   if (role === UserRole.ADMIN) {
     return [
       ...baseNavigation,
-      { name: "SaaS Admin", href: "/admin", icon: Shield },
-      { name: "Tenant Admin", href: "/tenant-admin", icon: Building2 }
+      { name: "Tenant Admin", href: "/tenant-admin", icon: Building2 },
+      { name: "Integrations", href: "/integrations", icon: Plug },
+      { name: "SaaS Admin", href: "/admin", icon: Shield }
     ]
-  } else if (role === UserRole.MANAGER) {
+  } else if (role === UserRole.CLINIC_ADMIN) {
     return [
       ...baseNavigation,
-      { name: "Tenant Admin", href: "/tenant-admin", icon: Building2 }
+      { name: "Tenant Admin", href: "/tenant-admin", icon: Building2 },
+      { name: "Integrations", href: "/integrations", icon: Plug }
     ]
   }
 

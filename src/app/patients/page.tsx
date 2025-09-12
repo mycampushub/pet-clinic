@@ -71,95 +71,13 @@ export default function PatientsPage() {
         setPets(data.pets)
         setFilteredPets(data.pets)
       } else {
-        // Fallback to mock data if API fails
-        const mockPets: PetWithOwner[] = [
-          {
-            id: "1",
-            tenantId: "1",
-            ownerId: "1",
-            name: "Max",
-            species: "Dog",
-            breed: "Golden Retriever",
-            gender: "MALE",
-            isNeutered: true,
-            dateOfBirth: new Date("2018-05-15"),
-            microchipId: "985141000123456",
-            color: "Golden",
-            weight: 32.5,
-            allergies: JSON.stringify(["Penicillin"]),
-            chronicConditions: JSON.stringify(["Arthritis"]),
-            notes: "Friendly dog, loves treats",
-            isActive: true,
-            createdAt: new Date(),
-            updatedAt: new Date(),
-            owner: {
-              id: "1",
-              tenantId: "1",
-              firstName: "John",
-              lastName: "Smith",
-              email: "john.smith@email.com",
-              phone: "+1-555-0123",
-              address: "123 Main St",
-              city: "Anytown",
-              state: "CA",
-              zipCode: "12345",
-              country: "US",
-              emergencyContact: JSON.stringify({ name: "Jane Smith", phone: "+1-555-0124" }),
-              notes: "Regular client, prefers morning appointments",
-              isActive: true,
-              createdAt: new Date(),
-              updatedAt: new Date()
-            }
-          }
-        ]
-        setPets(mockPets)
-        setFilteredPets(mockPets)
+        throw new Error('Failed to fetch patients data')
       }
     } catch (error) {
       console.error("Error fetching pets:", error)
-      // Fallback to mock data
-      const mockPets: PetWithOwner[] = [
-        {
-          id: "1",
-          tenantId: "1",
-          ownerId: "1",
-          name: "Max",
-          species: "Dog",
-          breed: "Golden Retriever",
-          gender: "MALE",
-          isNeutered: true,
-          dateOfBirth: new Date("2018-05-15"),
-          microchipId: "985141000123456",
-          color: "Golden",
-          weight: 32.5,
-          allergies: JSON.stringify(["Penicillin"]),
-          chronicConditions: JSON.stringify(["Arthritis"]),
-          notes: "Friendly dog, loves treats",
-          isActive: true,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-          owner: {
-            id: "1",
-            tenantId: "1",
-            firstName: "John",
-            lastName: "Smith",
-            email: "john.smith@email.com",
-            phone: "+1-555-0123",
-            address: "123 Main St",
-            city: "Anytown",
-            state: "CA",
-            zipCode: "12345",
-            country: "US",
-            emergencyContact: JSON.stringify({ name: "Jane Smith", phone: "+1-555-0124" }),
-            notes: "Regular client, prefers morning appointments",
-            isActive: true,
-            createdAt: new Date(),
-            updatedAt: new Date()
-          }
-        }
-      ]
-      setPets(mockPets)
-      setFilteredPets(mockPets)
+      // Set empty arrays on error
+      setPets([])
+      setFilteredPets([])
     } finally {
       setLoading(false)
     }

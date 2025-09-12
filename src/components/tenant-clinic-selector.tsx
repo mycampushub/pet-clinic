@@ -169,8 +169,8 @@ export function TenantClinicSelector({ className }: TenantClinicSelectorProps) {
   const currentClinic = clinics.find(c => c.id === selectedClinic)
   const tenantClinics = clinics.filter(c => c.tenantId === selectedTenant)
 
-  // Only show tenant selector for admin and manager users
-  const canSwitchTenants = session?.user?.role === 'ADMIN' || session?.user?.role === 'MANAGER'
+  // Only show tenant selector for admin and clinic admin users
+  const canSwitchTenants = session?.user?.role === 'ADMIN' || session?.user?.role === 'CLINIC_ADMIN'
   // All users can switch clinics they have access to
   const canSwitchClinics = true
 

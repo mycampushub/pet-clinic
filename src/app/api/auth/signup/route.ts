@@ -88,7 +88,7 @@ export async function POST(request: NextRequest) {
         phone,
         tenantId: tenant.id,
         clinicId: clinic?.id,
-        role: accountType === 'clinic' ? UserRole.ADMIN : (role === 'VETERINARIAN' ? UserRole.VETERINARIAN : UserRole.STAFF),
+        role: accountType === 'clinic' ? UserRole.CLINIC_ADMIN : (role === 'VETERINARIAN' ? UserRole.VETERINARIAN : UserRole.STAFF),
         isActive: true
       }
     })

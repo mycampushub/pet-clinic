@@ -76,7 +76,7 @@ export async function canAccessClinic(clinicId: string) {
 export function hasPermission(userRole: UserRole, requiredRole: UserRole): boolean {
   const roleHierarchy = {
     [UserRole.ADMIN]: 5,
-    [UserRole.MANAGER]: 4,
+    [UserRole.CLINIC_ADMIN]: 4,
     [UserRole.VETERINARIAN]: 3,
     [UserRole.VET_TECH]: 2,
     [UserRole.RECEPTIONIST]: 2,

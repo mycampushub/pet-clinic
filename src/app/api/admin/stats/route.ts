@@ -25,16 +25,43 @@ export async function GET(request: NextRequest) {
       db.clinic.count({ where: { isActive: true } })
     ])
 
-    // Get current month revenue (mock data for demo)
-    const systemRevenue = 15000
-    const newTenantsThisMonth = 3
+    // Get current month revenue from all paid invoices
+    const currentMonth = new Date()
+    currentMonth.setDate(1) // First day of current month
+    currentMonth.setHours(0, 0, 0, 0)
+    
+    const nextMonth = new Date(currentMonth)
+    nextMonth.setMonth(nextMonth.getMonth() + 1)
+    
+    const revenueResult = await db.invoice.aggregate({
+      where: {
+        paymentStatus: 'PAID',
+        invoiceDate: {
+          gte: currentMonth,
+          lt: nextMonth
+        }
+      },
+      _sum: {
+        total: true
+      }
+    })
+    
+    // Get new tenants this month
+    const newTenantsThisMonth = await db.tenant.count({
+      where: {
+        createdAt: {
+          gte: currentMonth,
+          lt: nextMonth
+        }
+      }
+    })
 
     const stats = {
       totalTenants,
       activeTenants,
       totalUsers,
       totalClinics,
-      systemRevenue,
+      systemRevenue: revenueResult._sum.total || 0,
       newTenantsThisMonth
     }
 

@@ -70,7 +70,7 @@ async function main() {
     }
   })
 
-  const managerUser = await prisma.user.upsert({
+  const clinicAdminUser = await prisma.user.upsert({
     where: { email: 'manager@petclinic.com' },
     update: {},
     create: {
@@ -80,7 +80,7 @@ async function main() {
       password: hashedPassword,
       firstName: 'Mike',
       lastName: 'Davis',
-      role: 'MANAGER',
+      role: 'CLINIC_ADMIN',
       isActive: true
     }
   })
@@ -352,7 +352,7 @@ async function main() {
   console.log('🔑 Demo credentials:')
   console.log('   Veterinarian: vet@petclinic.com / password123')
   console.log('   Receptionist: reception@petclinic.com / password123')
-  console.log('   Manager: manager@petclinic.com / password123')
+  console.log('   Clinic Admin: manager@petclinic.com / password123')
 }
 
 main()

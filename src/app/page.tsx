@@ -84,7 +84,7 @@ export default function Home() {
       features: ["Online booking widget", "Check-in/out flow", "Invoice management", "Client messaging"]
     },
     {
-      title: "Clinic Manager",
+      title: "Clinic Admin",
       icon: Building2,
       description: "Complete oversight of operations, staff, and finances.",
       features: ["Multi-location support", "Staff scheduling", "Revenue analytics", "Inventory control"]
@@ -107,7 +107,7 @@ export default function Home() {
     },
     {
       name: "Michael Chen",
-      role: "Clinic Manager",
+      role: "Clinic Admin",
       clinic: "City Animal Hospital",
       content: "The multi-location support and comprehensive reporting have been game-changers for our growing practice.",
       rating: 5

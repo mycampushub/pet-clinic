@@ -72,49 +72,21 @@ export default function Dashboard() {
           setStats(data.stats)
           setRecentAppointments(data.recentAppointments)
         } else {
-          // Fallback to mock data if API fails
-          const mockStats: DashboardStats = {
-            todayAppointments: 12,
-            completedAppointments: 8,
-            pendingInvoices: 5,
-            lowInventoryItems: 3,
-            upcomingReminders: 7,
-            newPatients: 2,
-            revenueToday: 1250.00
-          }
-          
-          const mockAppointments: RecentAppointment[] = [
-            { id: "1", petName: "Max", ownerName: "John Smith", time: "09:00", type: "Checkup", status: "completed" },
-            { id: "2", petName: "Luna", ownerName: "Sarah Johnson", time: "09:30", type: "Vaccination", status: "in-progress" },
-            { id: "3", petName: "Charlie", ownerName: "Mike Davis", time: "10:00", type: "Dental", status: "scheduled" },
-            { id: "4", petName: "Bella", ownerName: "Emily Brown", time: "10:30", type: "Surgery", status: "scheduled" },
-            { id: "5", petName: "Rocky", ownerName: "David Wilson", time: "11:00", type: "Grooming", status: "scheduled" }
-          ]
-          
-          setStats(mockStats)
-          setRecentAppointments(mockAppointments)
+          throw new Error('Failed to fetch dashboard data')
         }
       } catch (error) {
         console.error("Error fetching dashboard data:", error)
-        // Fallback to mock data
-        const mockStats: DashboardStats = {
-          todayAppointments: 12,
-          completedAppointments: 8,
-          pendingInvoices: 5,
-          lowInventoryItems: 3,
-          upcomingReminders: 7,
-          newPatients: 2,
-          revenueToday: 1250.00
-        }
-        
-        const mockAppointments: RecentAppointment[] = [
-          { id: "1", petName: "Max", ownerName: "John Smith", time: "09:00", type: "Checkup", status: "completed" },
-          { id: "2", petName: "Luna", ownerName: "Sarah Johnson", time: "09:30", type: "Vaccination", status: "in-progress" },
-          { id: "3", petName: "Charlie", ownerName: "Mike Davis", time: "10:00", type: "Dental", status: "scheduled" }
-        ]
-        
-        setStats(mockStats)
-        setRecentAppointments(mockAppointments)
+        // Set default empty values on error
+        setStats({
+          todayAppointments: 0,
+          completedAppointments: 0,
+          pendingInvoices: 0,
+          lowInventoryItems: 0,
+          upcomingReminders: 0,
+          newPatients: 0,
+          revenueToday: 0
+        })
+        setRecentAppointments([])
       } finally {
         setLoading(false)
       }
@@ -134,9 +106,9 @@ export default function Dashboard() {
                 <Calendar className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{stats.todayAppointments}</div>
+                <div className="text-2xl font-bold">{stats.todayAppointments || 0}</div>
                 <p className="text-xs text-muted-foreground">
-                  {stats.completedAppointments} completed
+                  {(stats.completedAppointments || 0)} completed
                 </p>
               </CardContent>
             </Card>
@@ -146,9 +118,9 @@ export default function Dashboard() {
                 <Heart className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{stats.todayAppointments}</div>
+                <div className="text-2xl font-bold">{stats.todayAppointments || 0}</div>
                 <p className="text-xs text-muted-foreground">
-                  {stats.newPatients} new patients
+                  {(stats.newPatients || 0)} new patients
                 </p>
               </CardContent>
             </Card>
@@ -188,7 +160,7 @@ export default function Dashboard() {
                 <Calendar className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{stats.todayAppointments}</div>
+                <div className="text-2xl font-bold">{stats.todayAppointments || 0}</div>
                 <p className="text-xs text-muted-foreground">
                   2 walk-ins waiting
                 </p>
@@ -200,7 +172,7 @@ export default function Dashboard() {
                 <CheckCircle className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{stats.completedAppointments}</div>
+                <div className="text-2xl font-bold">{stats.completedAppointments || 0}</div>
                 <p className="text-xs text-muted-foreground">
                   4 pending check-in
                 </p>
@@ -224,7 +196,7 @@ export default function Dashboard() {
                 <UserPlus className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{stats.newPatients}</div>
+                <div className="text-2xl font-bold">{stats.newPatients || 0}</div>
                 <p className="text-xs text-muted-foreground">
                   registered today
                 </p>
@@ -233,7 +205,7 @@ export default function Dashboard() {
           </div>
         )
       
-      case UserRole.MANAGER:
+      case UserRole.CLINIC_ADMIN:
         return (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <Card>
@@ -242,7 +214,7 @@ export default function Dashboard() {
                 <TrendingUp className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">${stats.revenueToday.toFixed(2)}</div>
+                <div className="text-2xl font-bold">${(stats.revenueToday || 0).toFixed(2)}</div>
                 <p className="text-xs text-muted-foreground">
                   +12% from yesterday
                 </p>
@@ -254,7 +226,7 @@ export default function Dashboard() {
                 <Calendar className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{stats.todayAppointments}</div>
+                <div className="text-2xl font-bold">{stats.todayAppointments || 0}</div>
                 <p className="text-xs text-muted-foreground">
                   85% utilization
                 </p>
@@ -266,7 +238,7 @@ export default function Dashboard() {
                 <CreditCard className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{stats.pendingInvoices}</div>
+                <div className="text-2xl font-bold">{stats.pendingInvoices || 0}</div>
                 <p className="text-xs text-muted-foreground">
                   ${850.00} outstanding
                 </p>
@@ -353,7 +325,7 @@ export default function Dashboard() {
           </div>
         )
       
-      case UserRole.MANAGER:
+      case UserRole.CLINIC_ADMIN:
         return (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <Button className="h-20 flex-col">

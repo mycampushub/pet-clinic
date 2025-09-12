@@ -105,8 +105,8 @@ export default function TenantAdminDashboard() {
     fetchTenantData()
   }, [])
 
-  // Only allow ADMIN and MANAGER users
-  if (!session || (session.user.role !== UserRole.ADMIN && session.user.role !== UserRole.MANAGER)) {
+  // Only allow ADMIN and CLINIC_ADMIN users
+  if (!session || (session.user.role !== UserRole.ADMIN && session.user.role !== UserRole.CLINIC_ADMIN)) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <Card className="w-full max-w-md">

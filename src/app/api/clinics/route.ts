@@ -18,10 +18,10 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get('limit') || '10')
 
     // Check permissions - users can view clinics from their tenant
-    // Admin and Manager users can view clinics from any tenant if specified
+    // Admin and Clinic Admin users can view clinics from any tenant if specified
     if (tenantId !== session.user.tenantId && 
         session.user.role !== 'ADMIN' && 
-        session.user.role !== 'MANAGER') {
+        session.user.role !== 'CLINIC_ADMIN') {
       return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 })
     }
 
@@ -70,8 +70,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Only admin and manager users can create clinics
-    if (session.user.role !== 'ADMIN' && session.user.role !== 'MANAGER') {
+    // Only admin and clinic admin users can create clinics
+    if (session.user.role !== 'ADMIN' && session.user.role !== 'CLINIC_ADMIN') {
       return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 })
     }
 

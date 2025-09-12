@@ -23,10 +23,10 @@ export async function GET(
     }
 
     // Check permissions - users can view clinics from their tenant
-    // Admin and Manager users can view clinics from any tenant
+    // Admin and Clinic Admin users can view clinics from any tenant
     if (clinic.tenantId !== session.user.tenantId && 
         session.user.role !== 'ADMIN' && 
-        session.user.role !== 'MANAGER') {
+        session.user.role !== 'CLINIC_ADMIN') {
       return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 })
     }
 
@@ -48,8 +48,8 @@ export async function PUT(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Only admin and manager users can update clinics
-    if (session.user.role !== 'ADMIN' && session.user.role !== 'MANAGER') {
+    // Only admin and clinic admin users can update clinics
+    if (session.user.role !== 'ADMIN' && session.user.role !== 'CLINIC_ADMIN') {
       return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 })
     }
 

@@ -507,7 +507,7 @@ export default function SignupPage() {
                             <SelectItem value="veterinarian">Veterinarian</SelectItem>
                             <SelectItem value="vet_tech">Veterinary Technician</SelectItem>
                             <SelectItem value="receptionist">Receptionist</SelectItem>
-                            <SelectItem value="manager">Clinic Manager</SelectItem>
+                            <SelectItem value="clinic_admin">Clinic Admin</SelectItem>
                             <SelectItem value="pharmacist">Pharmacist</SelectItem>
                           </SelectContent>
                         </Select>
