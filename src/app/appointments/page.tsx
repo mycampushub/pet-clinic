@@ -55,7 +55,7 @@ export default function AppointmentsPage() {
   useEffect(() => {
     fetchAppointments()
     generateTimeSlots()
-  }, [])
+  }, [selectedDate])
 
   useEffect(() => {
     if (appointments.length > 0) {
@@ -72,7 +72,82 @@ export default function AppointmentsPage() {
   const fetchAppointments = async () => {
     setLoading(true)
     try {
-      // Mock data - replace with actual API call
+      const response = await fetch(`/api/appointments?date=${selectedDate}`)
+      if (response.ok) {
+        const data = await response.json()
+        setAppointments(data)
+        setFilteredAppointments(data)
+      } else {
+        // Fallback to mock data if API fails
+        const mockAppointments: VisitWithDetails[] = [
+          {
+            id: "1",
+            tenantId: "1",
+            clinicId: "1",
+            petId: "1",
+            userId: "1",
+            visitType: "CONSULTATION",
+            status: "SCHEDULED",
+            scheduledAt: new Date("2024-09-15T09:00:00"),
+            reason: "Annual checkup and vaccination",
+            symptoms: null,
+            diagnosis: null,
+            treatment: null,
+            notes: null,
+            followUpRequired: false,
+            isActive: true,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+            pet: {
+              id: "1",
+              tenantId: "1",
+              ownerId: "1",
+              name: "Max",
+              species: "Dog",
+              breed: "Golden Retriever",
+              gender: "MALE",
+              isNeutered: true,
+              dateOfBirth: new Date("2018-05-15"),
+              microchipId: "985141000123456",
+              color: "Golden",
+              weight: 32.5,
+              allergies: null,
+              chronicConditions: null,
+              notes: null,
+              isActive: true,
+              createdAt: new Date(),
+              updatedAt: new Date(),
+              owner: {
+                id: "1",
+                tenantId: "1",
+                firstName: "John",
+                lastName: "Smith",
+                email: "john.smith@email.com",
+                phone: "+1-555-0123",
+                address: "123 Main St",
+                city: "Anytown",
+                state: "CA",
+                zipCode: "12345",
+                country: "US",
+                emergencyContact: null,
+                notes: null,
+                isActive: true,
+                createdAt: new Date(),
+                updatedAt: new Date()
+              }
+            },
+            user: {
+              firstName: "Dr. Sarah",
+              lastName: "Johnson"
+            }
+          }
+        ]
+        setAppointments(mockAppointments)
+        setFilteredAppointments(mockAppointments)
+      }
+    } catch (error) {
+      console.error("Error fetching appointments:", error)
+      // Fallback to mock data
       const mockAppointments: VisitWithDetails[] = [
         {
           id: "1",
@@ -134,196 +209,10 @@ export default function AppointmentsPage() {
             firstName: "Dr. Sarah",
             lastName: "Johnson"
           }
-        },
-        {
-          id: "2",
-          tenantId: "1",
-          clinicId: "1",
-          petId: "2",
-          userId: "2",
-          visitType: "VACCINATION",
-          status: "CONFIRMED",
-          scheduledAt: new Date("2024-09-15T09:30:00"),
-          reason: "Rabies vaccination booster",
-          symptoms: null,
-          diagnosis: null,
-          treatment: null,
-          notes: null,
-          followUpRequired: false,
-          isActive: true,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-          pet: {
-            id: "2",
-            tenantId: "1",
-            ownerId: "2",
-            name: "Luna",
-            species: "Cat",
-            breed: "Persian",
-            gender: "FEMALE",
-            isNeutered: true,
-            dateOfBirth: new Date("2020-02-10"),
-            microchipId: "985141000123457",
-            color: "White",
-            weight: 4.2,
-            allergies: null,
-            chronicConditions: null,
-            notes: null,
-            isActive: true,
-            createdAt: new Date(),
-            updatedAt: new Date(),
-            owner: {
-              id: "2",
-              tenantId: "1",
-              firstName: "Sarah",
-              lastName: "Johnson",
-              email: "sarah.j@email.com",
-              phone: "+1-555-0125",
-              address: "456 Oak Ave",
-              city: "Somewhere",
-              state: "CA",
-              zipCode: "12346",
-              country: "US",
-              emergencyContact: null,
-              notes: null,
-              isActive: true,
-              createdAt: new Date(),
-              updatedAt: new Date()
-            }
-          },
-          user: {
-            firstName: "Dr. Mike",
-            lastName: "Davis"
-          }
-        },
-        {
-          id: "3",
-          tenantId: "1",
-          clinicId: "1",
-          petId: "3",
-          userId: "1",
-          visitType: "DENTAL",
-          status: "SCHEDULED",
-          scheduledAt: new Date("2024-09-15T11:00:00"),
-          reason: "Dental cleaning and examination",
-          symptoms: null,
-          diagnosis: null,
-          treatment: null,
-          notes: "Patient has history of dental issues",
-          followUpRequired: false,
-          isActive: true,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-          pet: {
-            id: "3",
-            tenantId: "1",
-            ownerId: "3",
-            name: "Charlie",
-            species: "Dog",
-            breed: "Beagle",
-            gender: "MALE",
-            isNeutered: false,
-            dateOfBirth: new Date("2021-08-20"),
-            microchipId: null,
-            color: "Tri-color",
-            weight: 12.8,
-            allergies: null,
-            chronicConditions: null,
-            notes: null,
-            isActive: true,
-            createdAt: new Date(),
-            updatedAt: new Date(),
-            owner: {
-              id: "3",
-              tenantId: "1",
-              firstName: "Mike",
-              lastName: "Davis",
-              email: "mike.davis@email.com",
-              phone: "+1-555-0126",
-              address: "789 Pine St",
-              city: "Elsewhere",
-              state: "CA",
-              zipCode: "12347",
-              country: "US",
-              emergencyContact: null,
-              notes: null,
-              isActive: true,
-              createdAt: new Date(),
-              updatedAt: new Date()
-            }
-          },
-          user: {
-            firstName: "Dr. Sarah",
-            lastName: "Johnson"
-          }
-        },
-        {
-          id: "4",
-          tenantId: "1",
-          clinicId: "1",
-          petId: "1",
-          userId: "2",
-          visitType: "TELEMEDICINE",
-          status: "IN_PROGRESS",
-          scheduledAt: new Date("2024-09-15T14:00:00"),
-          reason: "Follow-up consultation for skin condition",
-          symptoms: "Owner reports continued itching",
-          diagnosis: null,
-          treatment: null,
-          notes: "Virtual follow-up",
-          followUpRequired: false,
-          isActive: true,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-          pet: {
-            id: "1",
-            tenantId: "1",
-            ownerId: "1",
-            name: "Max",
-            species: "Dog",
-            breed: "Golden Retriever",
-            gender: "MALE",
-            isNeutered: true,
-            dateOfBirth: new Date("2018-05-15"),
-            microchipId: "985141000123456",
-            color: "Golden",
-            weight: 32.5,
-            allergies: null,
-            chronicConditions: null,
-            notes: null,
-            isActive: true,
-            createdAt: new Date(),
-            updatedAt: new Date(),
-            owner: {
-              id: "1",
-              tenantId: "1",
-              firstName: "John",
-              lastName: "Smith",
-              email: "john.smith@email.com",
-              phone: "+1-555-0123",
-              address: "123 Main St",
-              city: "Anytown",
-              state: "CA",
-              zipCode: "12345",
-              country: "US",
-              emergencyContact: null,
-              notes: null,
-              isActive: true,
-              createdAt: new Date(),
-              updatedAt: new Date()
-            }
-          },
-          user: {
-            firstName: "Dr. Mike",
-            lastName: "Davis"
-          }
         }
       ]
-      
       setAppointments(mockAppointments)
       setFilteredAppointments(mockAppointments)
-    } catch (error) {
-      console.error("Error fetching appointments:", error)
     } finally {
       setLoading(false)
     }

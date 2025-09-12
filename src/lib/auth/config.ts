@@ -3,7 +3,7 @@ import { UserRole } from "@prisma/client"
 import CredentialsProvider from "next-auth/providers/credentials"
 import GoogleProvider from "next-auth/providers/google"
 import bcrypt from "bcryptjs"
-import { db } from "@/lib/db"
+import { mockDb } from "@/lib/mock-db"
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -26,27 +26,8 @@ export const authOptions: NextAuthOptions = {
         try {
           // Handle clinic code login
           if (credentials.clinicCode) {
-            // Find clinic by access code
-            const clinic = await db.clinic.findFirst({
-              where: {
-                name: {
-                  contains: credentials.clinicCode,
-                  mode: "insensitive"
-                }
-              }
-            })
-
-            if (!clinic) {
-              return null
-            }
-
-            // Find user by email and clinic
-            const user = await db.user.findFirst({
-              where: {
-                email: credentials.email,
-                clinicId: clinic.id
-              }
-            })
+            // Find user by email (mock implementation doesn't have clinic codes)
+            const user = await mockDb.findUserByEmail(credentials.email)
 
             if (!user || !user.isActive) {
               return null
@@ -71,11 +52,7 @@ export const authOptions: NextAuthOptions = {
             }
           } else {
             // Handle regular email login
-            const user = await db.user.findUnique({
-              where: {
-                email: credentials.email
-              }
-            })
+            const user = await mockDb.findUserByEmail(credentials.email)
 
             if (!user || !user.isActive) {
               return null

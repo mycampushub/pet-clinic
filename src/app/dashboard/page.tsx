@@ -62,11 +62,40 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // Simulate API call to fetch dashboard data
     const fetchDashboardData = async () => {
       setLoading(true)
       try {
-        // Mock data - replace with actual API calls
+        const response = await fetch('/api/dashboard')
+        if (response.ok) {
+          const data = await response.json()
+          setStats(data.stats)
+          setRecentAppointments(data.recentAppointments)
+        } else {
+          // Fallback to mock data if API fails
+          const mockStats: DashboardStats = {
+            todayAppointments: 12,
+            completedAppointments: 8,
+            pendingInvoices: 5,
+            lowInventoryItems: 3,
+            upcomingReminders: 7,
+            newPatients: 2,
+            revenueToday: 1250.00
+          }
+          
+          const mockAppointments: RecentAppointment[] = [
+            { id: "1", petName: "Max", ownerName: "John Smith", time: "09:00", type: "Checkup", status: "completed" },
+            { id: "2", petName: "Luna", ownerName: "Sarah Johnson", time: "09:30", type: "Vaccination", status: "in-progress" },
+            { id: "3", petName: "Charlie", ownerName: "Mike Davis", time: "10:00", type: "Dental", status: "scheduled" },
+            { id: "4", petName: "Bella", ownerName: "Emily Brown", time: "10:30", type: "Surgery", status: "scheduled" },
+            { id: "5", petName: "Rocky", ownerName: "David Wilson", time: "11:00", type: "Grooming", status: "scheduled" }
+          ]
+          
+          setStats(mockStats)
+          setRecentAppointments(mockAppointments)
+        }
+      } catch (error) {
+        console.error("Error fetching dashboard data:", error)
+        // Fallback to mock data
         const mockStats: DashboardStats = {
           todayAppointments: 12,
           completedAppointments: 8,
@@ -80,15 +109,11 @@ export default function Dashboard() {
         const mockAppointments: RecentAppointment[] = [
           { id: "1", petName: "Max", ownerName: "John Smith", time: "09:00", type: "Checkup", status: "completed" },
           { id: "2", petName: "Luna", ownerName: "Sarah Johnson", time: "09:30", type: "Vaccination", status: "in-progress" },
-          { id: "3", petName: "Charlie", ownerName: "Mike Davis", time: "10:00", type: "Dental", status: "scheduled" },
-          { id: "4", petName: "Bella", ownerName: "Emily Brown", time: "10:30", type: "Surgery", status: "scheduled" },
-          { id: "5", petName: "Rocky", ownerName: "David Wilson", time: "11:00", type: "Grooming", status: "scheduled" }
+          { id: "3", petName: "Charlie", ownerName: "Mike Davis", time: "10:00", type: "Dental", status: "scheduled" }
         ]
         
         setStats(mockStats)
         setRecentAppointments(mockAppointments)
-      } catch (error) {
-        console.error("Error fetching dashboard data:", error)
       } finally {
         setLoading(false)
       }

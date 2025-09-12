@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth/config'
-import { db } from '@/lib/db'
+import { mockDb } from '@/lib/mock-db'
 
 export async function GET(request: NextRequest) {
   try {
@@ -16,46 +16,18 @@ export async function GET(request: NextRequest) {
     const page = parseInt(searchParams.get('page') || '1')
     const limit = parseInt(searchParams.get('limit') || '10')
 
-    // Build where clause for search
-    const where: any = {
-      isActive: true
-    }
-
-    if (search) {
-      where.OR = [
-        { name: { contains: search, mode: 'insensitive' } },
-        { species: { contains: search, mode: 'insensitive' } },
-        { breed: { contains: search, mode: 'insensitive' } },
-        {
-          owner: {
-            OR: [
-              { firstName: { contains: search, mode: 'insensitive' } },
-              { lastName: { contains: search, mode: 'insensitive' } }
-            ]
-          }
-        }
-      ]
-    }
-
-    const [pets, total] = await Promise.all([
-      db.pet.findMany({
-        where,
-        include: {
-          owner: true,
-          visits: {
-            take: 1,
-            orderBy: { scheduledAt: 'desc' }
-          }
-        },
-        skip: (page - 1) * limit,
-        take: limit,
-        orderBy: { updatedAt: 'desc' }
-      }),
-      db.pet.count({ where })
-    ])
+    const tenantId = session.user.tenantId
+    const pets = await mockDb.findPets(tenantId, search)
+    
+    // Apply pagination
+    const startIndex = (page - 1) * limit
+    const endIndex = startIndex + limit
+    const paginatedPets = pets.slice(startIndex, endIndex)
+    
+    const total = pets.length
 
     return NextResponse.json({
-      pets,
+      pets: paginatedPets,
       pagination: {
         page,
         limit,
@@ -100,37 +72,33 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if owner exists
-    const owner = await db.owner.findUnique({
-      where: { id: ownerId }
-    })
+    const owner = await mockDb.findOwnerById(ownerId)
 
     if (!owner) {
       return NextResponse.json({ error: 'Owner not found' }, { status: 404 })
     }
 
-    const pet = await db.pet.create({
-      data: {
-        name,
-        species,
-        breed,
-        gender,
-        isNeutered: isNeutered || false,
-        dateOfBirth: dateOfBirth ? new Date(dateOfBirth) : null,
-        microchipId,
-        color,
-        weight: weight ? parseFloat(weight) : null,
-        allergies: allergies ? JSON.stringify(allergies) : null,
-        chronicConditions: chronicConditions ? JSON.stringify(chronicConditions) : null,
-        notes,
-        ownerId,
-        tenantId: owner.tenantId
-      },
-      include: {
-        owner: true
-      }
+    const pet = await mockDb.createPet({
+      name,
+      species,
+      breed,
+      gender,
+      isNeutered: isNeutered || false,
+      dateOfBirth: dateOfBirth ? new Date(dateOfBirth) : undefined,
+      microchipId,
+      color,
+      weight: weight ? parseFloat(weight) : undefined,
+      allergies,
+      chronicConditions,
+      notes,
+      ownerId,
+      tenantId: owner.tenantId
     })
 
-    return NextResponse.json(pet, { status: 201 })
+    // Get the pet with owner information
+    const petWithOwner = await mockDb.findPetById(pet.id)
+
+    return NextResponse.json(petWithOwner, { status: 201 })
   } catch (error) {
     console.error('Error creating pet:', error)
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 })

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth/config'
-import { db } from '@/lib/db'
+import { mockDb } from '@/lib/mock-db'
 
 export async function GET(request: NextRequest) {
   try {
@@ -15,36 +15,8 @@ export async function GET(request: NextRequest) {
     const date = searchParams.get('date') || new Date().toISOString().split('T')[0]
     const status = searchParams.get('status')
 
-    const where: any = {
-      scheduledAt: {
-        gte: new Date(`${date}T00:00:00`),
-        lt: new Date(`${date}T23:59:59`)
-      },
-      isActive: true
-    }
-
-    if (status && status !== 'ALL') {
-      where.status = status
-    }
-
-    const appointments = await db.visit.findMany({
-      where,
-      include: {
-        pet: {
-          include: {
-            owner: true
-          }
-        },
-        user: {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true
-          }
-        }
-      },
-      orderBy: { scheduledAt: 'asc' }
-    })
+    const tenantId = session.user.tenantId
+    const appointments = await mockDb.findVisits(tenantId, date, status || undefined)
 
     return NextResponse.json(appointments)
   } catch (error) {
@@ -75,43 +47,39 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
     }
 
-    // Check if pet exists
-    const pet = await db.pet.findUnique({
-      where: { id: petId }
-    })
+    // Check if pet exists and get tenant info
+    const petWithOwner = await mockDb.findPetById(petId)
 
-    if (!pet) {
+    if (!petWithOwner) {
       return NextResponse.json({ error: 'Pet not found' }, { status: 404 })
     }
 
-    const appointment = await db.visit.create({
-      data: {
-        petId,
-        visitType,
-        scheduledAt: new Date(scheduledAt),
-        reason,
-        userId: userId || null,
-        status: 'SCHEDULED',
-        tenantId: pet.tenantId,
-        clinicId: pet.ownerId // This should be the clinic ID, needs to be fixed
-      },
-      include: {
-        pet: {
-          include: {
-            owner: true
-          }
-        },
-        user: {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true
-          }
-        }
-      }
+    const appointment = await mockDb.createVisit({
+      petId,
+      visitType,
+      scheduledAt: new Date(scheduledAt),
+      reason,
+      userId: userId || null,
+      status: 'SCHEDULED',
+      tenantId: petWithOwner.tenantId,
+      clinicId: session.user.clinicId || 'clinic-1', // Use user's clinic or default
+      checkedInAt: undefined,
+      startedAt: undefined,
+      completedAt: undefined,
+      symptoms: '',
+      diagnosis: '',
+      treatment: '',
+      notes: '',
+      followUpRequired: false,
+      followUpDate: undefined,
+      isActive: true
     })
 
-    return NextResponse.json(appointment, { status: 201 })
+    // Get the complete appointment with related data
+    const appointments = await mockDb.findVisits(petWithOwner.tenantId)
+    const completeAppointment = appointments.find(v => v.id === appointment.id)
+
+    return NextResponse.json(completeAppointment, { status: 201 })
   } catch (error) {
     console.error('Error creating appointment:', error)
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 })

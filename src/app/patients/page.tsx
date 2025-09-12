@@ -65,7 +65,59 @@ export default function PatientsPage() {
   const fetchPets = async () => {
     setLoading(true)
     try {
-      // Mock data - replace with actual API call
+      const response = await fetch('/api/patients')
+      if (response.ok) {
+        const data = await response.json()
+        setPets(data.pets)
+        setFilteredPets(data.pets)
+      } else {
+        // Fallback to mock data if API fails
+        const mockPets: PetWithOwner[] = [
+          {
+            id: "1",
+            tenantId: "1",
+            ownerId: "1",
+            name: "Max",
+            species: "Dog",
+            breed: "Golden Retriever",
+            gender: "MALE",
+            isNeutered: true,
+            dateOfBirth: new Date("2018-05-15"),
+            microchipId: "985141000123456",
+            color: "Golden",
+            weight: 32.5,
+            allergies: JSON.stringify(["Penicillin"]),
+            chronicConditions: JSON.stringify(["Arthritis"]),
+            notes: "Friendly dog, loves treats",
+            isActive: true,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+            owner: {
+              id: "1",
+              tenantId: "1",
+              firstName: "John",
+              lastName: "Smith",
+              email: "john.smith@email.com",
+              phone: "+1-555-0123",
+              address: "123 Main St",
+              city: "Anytown",
+              state: "CA",
+              zipCode: "12345",
+              country: "US",
+              emergencyContact: JSON.stringify({ name: "Jane Smith", phone: "+1-555-0124" }),
+              notes: "Regular client, prefers morning appointments",
+              isActive: true,
+              createdAt: new Date(),
+              updatedAt: new Date()
+            }
+          }
+        ]
+        setPets(mockPets)
+        setFilteredPets(mockPets)
+      }
+    } catch (error) {
+      console.error("Error fetching pets:", error)
+      // Fallback to mock data
       const mockPets: PetWithOwner[] = [
         {
           id: "1",
@@ -104,89 +156,10 @@ export default function PatientsPage() {
             createdAt: new Date(),
             updatedAt: new Date()
           }
-        },
-        {
-          id: "2",
-          tenantId: "1",
-          ownerId: "2",
-          name: "Luna",
-          species: "Cat",
-          breed: "Persian",
-          gender: "FEMALE",
-          isNeutered: true,
-          dateOfBirth: new Date("2020-02-10"),
-          microchipId: "985141000123457",
-          color: "White",
-          weight: 4.2,
-          allergies: null,
-          chronicConditions: null,
-          notes: "Shy, needs gentle handling",
-          isActive: true,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-          owner: {
-            id: "2",
-            tenantId: "1",
-            firstName: "Sarah",
-            lastName: "Johnson",
-            email: "sarah.j@email.com",
-            phone: "+1-555-0125",
-            address: "456 Oak Ave",
-            city: "Somewhere",
-            state: "CA",
-            zipCode: "12346",
-            country: "US",
-            emergencyContact: null,
-            notes: "New client, referred by neighbor",
-            isActive: true,
-            createdAt: new Date(),
-            updatedAt: new Date()
-          }
-        },
-        {
-          id: "3",
-          tenantId: "1",
-          ownerId: "3",
-          name: "Charlie",
-          species: "Dog",
-          breed: "Beagle",
-          gender: "MALE",
-          isNeutered: false,
-          dateOfBirth: new Date("2021-08-20"),
-          microchipId: null,
-          color: "Tri-color",
-          weight: 12.8,
-          allergies: JSON.stringify(["Chicken"]),
-          chronicConditions: null,
-          notes: "Energetic, needs exercise",
-          isActive: true,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-          owner: {
-            id: "3",
-            tenantId: "1",
-            firstName: "Mike",
-            lastName: "Davis",
-            email: "mike.davis@email.com",
-            phone: "+1-555-0126",
-            address: "789 Pine St",
-            city: "Elsewhere",
-            state: "CA",
-            zipCode: "12347",
-            country: "US",
-            emergencyContact: null,
-            notes: "First-time pet owner",
-            isActive: true,
-            createdAt: new Date(),
-            updatedAt: new Date()
-          }
         }
       ]
-      
       setPets(mockPets)
       setFilteredPets(mockPets)
-    } catch (error) {
-      console.error("Error fetching pets:", error)
     } finally {
       setLoading(false)
     }

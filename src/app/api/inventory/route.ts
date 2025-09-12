@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth/config'
-import { db } from '@/lib/db'
+import { mockDb } from '@/lib/mock-db'
 
 export async function GET(request: NextRequest) {
   try {
@@ -16,38 +16,29 @@ export async function GET(request: NextRequest) {
     const lowStock = searchParams.get('lowStock')
     const expiring = searchParams.get('expiring')
 
-    const where: any = {
-      isActive: true
-    }
-
+    const tenantId = session.user.tenantId
+    let inventory = await mockDb.findInventory(tenantId)
+    
+    // Filter by category
     if (category) {
-      where.category = category
+      inventory = inventory.filter(item => item.category === category)
     }
-
-    const inventory = await db.inventoryItem.findMany({
-      where,
-      include: {
-        medication: true
-      },
-      orderBy: { name: 'asc' }
-    })
-
+    
     // Filter for low stock items
-    let filteredInventory = inventory
     if (lowStock === 'true') {
-      filteredInventory = inventory.filter(item => item.quantity <= item.reorderPoint)
+      inventory = inventory.filter(item => item.quantity <= item.reorderPoint)
     }
 
     // Filter for expiring items
     if (expiring === 'true') {
       const thirtyDaysFromNow = new Date()
       thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30)
-      filteredInventory = filteredInventory.filter(item => 
+      inventory = inventory.filter(item => 
         item.expiryDate && new Date(item.expiryDate) <= thirtyDaysFromNow
       )
     }
 
-    return NextResponse.json(filteredInventory)
+    return NextResponse.json(inventory)
   } catch (error) {
     console.error('Error fetching inventory:', error)
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 })
@@ -86,29 +77,24 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
     }
 
-    const inventoryItem = await db.inventoryItem.create({
-      data: {
-        name,
-        description,
-        category,
-        quantity: parseInt(quantity),
-        reorderPoint: parseInt(reorderPoint),
-        unit,
-        cost: parseFloat(cost) || 0,
-        price: parseFloat(price) || 0,
-        lotNumber,
-        expiryDate: expiryDate ? new Date(expiryDate) : null,
-        isControlled: isControlled || false,
-        schedule,
-        location,
-        notes,
-        medicationId,
-        tenantId: session.user.tenantId,
-        clinicId: session.user.clinicId || '1'
-      },
-      include: {
-        medication: true
-      }
+    const inventoryItem = await mockDb.createInventoryItem({
+      name,
+      description,
+      category,
+      quantity: parseInt(quantity),
+      reorderPoint: parseInt(reorderPoint),
+      unit,
+      cost: parseFloat(cost) || 0,
+      price: parseFloat(price) || 0,
+      lotNumber,
+      expiryDate: expiryDate ? new Date(expiryDate) : undefined,
+      isControlled: isControlled || false,
+      schedule,
+      location,
+      notes,
+      medicationId,
+      tenantId: session.user.tenantId,
+      clinicId: session.user.clinicId || 'clinic-1'
     })
 
     return NextResponse.json(inventoryItem, { status: 201 })
