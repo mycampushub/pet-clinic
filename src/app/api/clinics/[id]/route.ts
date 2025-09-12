@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth/config'
-import { mockDb } from '@/lib/mock-db'
+import { db } from '@/lib/db'
 
 export async function GET(
   request: NextRequest,
@@ -14,7 +14,9 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const clinic = await mockDb.findClinicById(params.id)
+    const clinic = await db.clinic.findUnique({
+      where: { id: params.id }
+    })
     
     if (!clinic) {
       return NextResponse.json({ error: 'Clinic not found' }, { status: 404 })
@@ -68,7 +70,10 @@ export async function PUT(
     } = body
 
     // Check if clinic exists
-    const existingClinic = await mockDb.findClinicById(params.id)
+    const existingClinic = await db.clinic.findUnique({
+      where: { id: params.id }
+    })
+    
     if (!existingClinic) {
       return NextResponse.json({ error: 'Clinic not found' }, { status: 404 })
     }
@@ -93,12 +98,11 @@ export async function PUT(
     if (settings !== undefined) updateData.settings = settings
     if (isActive !== undefined) updateData.isActive = isActive
 
-    const updatedClinic = await mockDb.updateClinic(params.id, updateData)
+    const updatedClinic = await db.clinic.update({
+      where: { id: params.id },
+      data: updateData
+    })
     
-    if (!updatedClinic) {
-      return NextResponse.json({ error: 'Failed to update clinic' }, { status: 400 })
-    }
-
     return NextResponse.json(updatedClinic)
   } catch (error) {
     console.error('Error updating clinic:', error)
@@ -123,16 +127,17 @@ export async function DELETE(
     }
 
     // Check if clinic exists
-    const existingClinic = await mockDb.findClinicById(params.id)
+    const existingClinic = await db.clinic.findUnique({
+      where: { id: params.id }
+    })
+    
     if (!existingClinic) {
       return NextResponse.json({ error: 'Clinic not found' }, { status: 404 })
     }
 
-    const success = await mockDb.deleteClinic(params.id)
-    
-    if (!success) {
-      return NextResponse.json({ error: 'Failed to delete clinic' }, { status: 400 })
-    }
+    await db.clinic.delete({
+      where: { id: params.id }
+    })
 
     return NextResponse.json({ message: 'Clinic deleted successfully' })
   } catch (error) {

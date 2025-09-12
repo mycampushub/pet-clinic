@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth/config'
-import { mockDb } from '@/lib/mock-db'
+import { db } from '@/lib/db'
 
 export async function GET(request: NextRequest) {
   try {
@@ -17,19 +17,39 @@ export async function GET(request: NextRequest) {
     const expiring = searchParams.get('expiring')
 
     const tenantId = session.user.tenantId
-    let inventory = await mockDb.findInventory(tenantId)
+
+    // Build where clause for inventory items
+    const where: any = { tenantId }
     
     // Filter by category
     if (category) {
-      inventory = inventory.filter(item => item.category === category)
+      where.category = category
     }
     
     // Filter for low stock items
     if (lowStock === 'true') {
-      inventory = inventory.filter(item => item.quantity <= item.reorderPoint)
+      // This will be handled in application logic
     }
 
     // Filter for expiring items
+    if (expiring === 'true') {
+      // This will be handled in application logic
+    }
+
+    let inventory = await db.inventoryItem.findMany({
+      where,
+      include: {
+        medication: true,
+        clinic: true
+      },
+      orderBy: { createdAt: 'desc' }
+    })
+    
+    // Apply additional filters in application logic
+    if (lowStock === 'true') {
+      inventory = inventory.filter(item => item.quantity <= item.reorderPoint)
+    }
+
     if (expiring === 'true') {
       const thirtyDaysFromNow = new Date()
       thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30)
@@ -77,24 +97,30 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
     }
 
-    const inventoryItem = await mockDb.createInventoryItem({
-      name,
-      description,
-      category,
-      quantity: parseInt(quantity),
-      reorderPoint: parseInt(reorderPoint),
-      unit,
-      cost: parseFloat(cost) || 0,
-      price: parseFloat(price) || 0,
-      lotNumber,
-      expiryDate: expiryDate ? new Date(expiryDate) : undefined,
-      isControlled: isControlled || false,
-      schedule,
-      location,
-      notes,
-      medicationId,
-      tenantId: session.user.tenantId,
-      clinicId: session.user.clinicId || 'clinic-1'
+    const inventoryItem = await db.inventoryItem.create({
+      data: {
+        name,
+        description,
+        category,
+        quantity: parseInt(quantity),
+        reorderPoint: parseInt(reorderPoint),
+        unit,
+        cost: parseFloat(cost) || 0,
+        price: parseFloat(price) || 0,
+        lotNumber,
+        expiryDate: expiryDate ? new Date(expiryDate) : null,
+        isControlled: isControlled || false,
+        schedule,
+        location,
+        notes,
+        medicationId,
+        tenantId: session.user.tenantId,
+        clinicId: session.user.clinicId || 'clinic-1'
+      },
+      include: {
+        medication: true,
+        clinic: true
+      }
     })
 
     return NextResponse.json(inventoryItem, { status: 201 })

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth/config'
-import { mockDb } from '@/lib/mock-db'
+import { db } from '@/lib/db'
 
 export async function GET(
   request: NextRequest,
@@ -19,7 +19,9 @@ export async function GET(
       return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 })
     }
 
-    const tenant = await mockDb.findTenantById(params.id)
+    const tenant = await db.tenant.findUnique({
+      where: { id: params.id }
+    })
     
     if (!tenant) {
       return NextResponse.json({ error: 'Tenant not found' }, { status: 404 })
@@ -58,7 +60,10 @@ export async function PUT(
     } = body
 
     // Check if tenant exists
-    const existingTenant = await mockDb.findTenantById(params.id)
+    const existingTenant = await db.tenant.findUnique({
+      where: { id: params.id }
+    })
+    
     if (!existingTenant) {
       return NextResponse.json({ error: 'Tenant not found' }, { status: 404 })
     }
@@ -71,7 +76,10 @@ export async function PUT(
       }
 
       // Check if another tenant with this slug already exists
-      const tenantWithSameSlug = await mockDb.findTenantBySlug(slug)
+      const tenantWithSameSlug = await db.tenant.findUnique({
+        where: { slug }
+      })
+      
       if (tenantWithSameSlug && tenantWithSameSlug.id !== params.id) {
         return NextResponse.json({ error: 'Tenant with this slug already exists' }, { status: 409 })
       }
@@ -84,12 +92,11 @@ export async function PUT(
     if (settings !== undefined) updateData.settings = settings
     if (isActive !== undefined) updateData.isActive = isActive
 
-    const updatedTenant = await mockDb.updateTenant(params.id, updateData)
+    const updatedTenant = await db.tenant.update({
+      where: { id: params.id },
+      data: updateData
+    })
     
-    if (!updatedTenant) {
-      return NextResponse.json({ error: 'Failed to update tenant' }, { status: 400 })
-    }
-
     return NextResponse.json(updatedTenant)
   } catch (error) {
     console.error('Error updating tenant:', error)
@@ -114,16 +121,17 @@ export async function DELETE(
     }
 
     // Check if tenant exists
-    const existingTenant = await mockDb.findTenantById(params.id)
+    const existingTenant = await db.tenant.findUnique({
+      where: { id: params.id }
+    })
+    
     if (!existingTenant) {
       return NextResponse.json({ error: 'Tenant not found' }, { status: 404 })
     }
 
-    const success = await mockDb.deleteTenant(params.id)
-    
-    if (!success) {
-      return NextResponse.json({ error: 'Failed to delete tenant' }, { status: 400 })
-    }
+    await db.tenant.delete({
+      where: { id: params.id }
+    })
 
     return NextResponse.json({ message: 'Tenant deleted successfully' })
   } catch (error) {

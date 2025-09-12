@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth/config'
-import { mockDb } from '@/lib/mock-db'
+import { db } from '@/lib/db'
 
 export async function GET(request: NextRequest) {
   try {
@@ -17,22 +17,39 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get('limit') || '10')
 
     const tenantId = session.user.tenantId
-    let invoices = await mockDb.findInvoices(tenantId)
+
+    // Build where clause for invoices
+    const where: any = { tenantId }
     
-    // Filter by status if provided
     if (status && status !== 'ALL') {
-      invoices = invoices.filter(invoice => invoice.status === status)
+      where.status = status
     }
-    
-    // Apply pagination
-    const startIndex = (page - 1) * limit
-    const endIndex = startIndex + limit
-    const paginatedInvoices = invoices.slice(startIndex, endIndex)
-    
-    const total = invoices.length
+
+    const [invoices, total] = await Promise.all([
+      db.invoice.findMany({
+        where,
+        include: {
+          visit: {
+            include: {
+              pet: {
+                include: {
+                  owner: true
+                }
+              }
+            }
+          },
+          owner: true,
+          clinic: true
+        },
+        skip: (page - 1) * limit,
+        take: limit,
+        orderBy: { createdAt: 'desc' }
+      }),
+      db.invoice.count({ where })
+    ])
 
     return NextResponse.json({
-      invoices: paginatedInvoices,
+      invoices,
       pagination: {
         page,
         limit,
@@ -75,25 +92,41 @@ export async function POST(request: NextRequest) {
     }
 
     // Generate invoice number
-    const invoiceCount = (await mockDb.findInvoices(session.user.tenantId)).length
+    const invoiceCount = await db.invoice.count({
+      where: { tenantId: session.user.tenantId }
+    })
     const invoiceNumber = `INV-${new Date().getFullYear()}-${String(invoiceCount + 1).padStart(3, '0')}`
 
-    // Create invoice
-    const invoice = await mockDb.createInvoice({
-      invoiceNumber,
-      invoiceDate: new Date(),
-      dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
-      subtotal: parseFloat(subtotal),
-      tax: parseFloat(tax) || 0,
-      discount: parseFloat(discount) || 0,
-      total: parseFloat(total),
-      status: 'PENDING' as any,
-      paymentStatus: 'UNPAID' as any,
-      visitId,
-      ownerId,
-      tenantId: session.user.tenantId,
-      clinicId: session.user.clinicId || 'clinic-1',
-      notes: ''
+    // Create invoice using real database
+    const invoice = await db.invoice.create({
+      data: {
+        invoiceNumber,
+        invoiceDate: new Date(),
+        dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
+        subtotal: parseFloat(subtotal),
+        tax: parseFloat(tax) || 0,
+        discount: parseFloat(discount) || 0,
+        total: parseFloat(total),
+        status: 'PENDING',
+        paymentStatus: 'UNPAID',
+        visitId,
+        ownerId,
+        tenantId: session.user.tenantId,
+        clinicId: session.user.clinicId || 'clinic-1'
+      },
+      include: {
+        visit: {
+          include: {
+            pet: {
+              include: {
+                owner: true
+              }
+            }
+          }
+        },
+        owner: true,
+        clinic: true
+      }
     })
 
     return NextResponse.json(invoice, { status: 201 })

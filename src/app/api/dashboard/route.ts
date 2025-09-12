@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth/config'
-import { mockDb } from '@/lib/mock-db'
+import { db } from '@/lib/db'
 
 export async function GET(request: NextRequest) {
   try {
@@ -12,11 +12,55 @@ export async function GET(request: NextRequest) {
     }
 
     const tenantId = session.user.tenantId
-    const stats = await mockDb.getDashboardStats(tenantId)
 
-    // Get recent appointments
-    const today = new Date().toISOString().split('T')[0]
-    const appointments = await mockDb.findVisits(tenantId, today)
+    // Get dashboard stats using real database
+    const [
+      totalPets,
+      totalOwners,
+      totalVisits,
+      upcomingAppointments
+    ] = await Promise.all([
+      db.pet.count({ where: { tenantId } }),
+      db.owner.count({ where: { tenantId } }),
+      db.visit.count({ where: { tenantId } }),
+      db.visit.count({ 
+        where: { 
+          tenantId,
+          scheduledAt: { gte: new Date() }
+        }
+      })
+    ])
+
+    const stats = {
+      totalPets,
+      totalOwners,
+      totalVisits,
+      upcomingAppointments
+    }
+
+    // Get recent appointments using real database
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    const tomorrow = new Date(today)
+    tomorrow.setDate(tomorrow.getDate() + 1)
+
+    const appointments = await db.visit.findMany({
+      where: {
+        tenantId,
+        scheduledAt: {
+          gte: today,
+          lt: tomorrow
+        }
+      },
+      include: {
+        pet: {
+          include: {
+            owner: true
+          }
+        }
+      },
+      orderBy: { scheduledAt: 'asc' }
+    })
     
     const recentAppointments = appointments.map(apt => ({
       id: apt.id,

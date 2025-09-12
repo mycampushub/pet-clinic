@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth/config'
-import { mockDb } from '@/lib/mock-db'
+import { db } from '@/lib/db'
 
 export async function GET(request: NextRequest) {
   try {
@@ -25,28 +25,30 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 })
     }
 
-    let clinics = await mockDb.findClinics(tenantId)
+    // Build where clause for clinics
+    const where: any = { tenantId }
     
-    // Apply search filter if provided
     if (search) {
-      const searchLower = search.toLowerCase()
-      clinics = clinics.filter(clinic => 
-        clinic.name.toLowerCase().includes(searchLower) ||
-        clinic.city.toLowerCase().includes(searchLower) ||
-        clinic.state.toLowerCase().includes(searchLower) ||
-        clinic.phone.toLowerCase().includes(searchLower)
-      )
+      where.OR = [
+        { name: { contains: search, mode: 'insensitive' } },
+        { city: { contains: search, mode: 'insensitive' } },
+        { state: { contains: search, mode: 'insensitive' } },
+        { phone: { contains: search, mode: 'insensitive' } }
+      ]
     }
-    
-    // Apply pagination
-    const startIndex = (page - 1) * limit
-    const endIndex = startIndex + limit
-    const paginatedClinics = clinics.slice(startIndex, endIndex)
-    
-    const total = clinics.length
+
+    const [clinics, total] = await Promise.all([
+      db.clinic.findMany({
+        where,
+        skip: (page - 1) * limit,
+        take: limit,
+        orderBy: { createdAt: 'desc' }
+      }),
+      db.clinic.count({ where })
+    ])
 
     return NextResponse.json({
-      clinics: paginatedClinics,
+      clinics,
       pagination: {
         page,
         limit,
@@ -105,25 +107,30 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Insufficient permissions to create clinic for this tenant' }, { status: 403 })
     }
 
-    const tenant = await mockDb.findTenantById(finalTenantId)
+    const tenant = await db.tenant.findUnique({
+      where: { id: finalTenantId }
+    })
+    
     if (!tenant) {
       return NextResponse.json({ error: 'Tenant not found' }, { status: 404 })
     }
 
-    const clinic = await mockDb.createClinic({
-      tenantId: finalTenantId,
-      name,
-      address,
-      city,
-      state,
-      zipCode,
-      country: country || 'US',
-      phone,
-      email,
-      website,
-      timezone: timezone || 'UTC',
-      settings: settings || {},
-      isActive: true
+    const clinic = await db.clinic.create({
+      data: {
+        tenantId: finalTenantId,
+        name,
+        address,
+        city,
+        state,
+        zipCode,
+        country: country || 'US',
+        phone,
+        email,
+        website,
+        timezone: timezone || 'UTC',
+        settings: settings || {},
+        isActive: true
+      }
     })
 
     return NextResponse.json(clinic, { status: 201 })

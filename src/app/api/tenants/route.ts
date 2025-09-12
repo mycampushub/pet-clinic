@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth/config'
-import { mockDb } from '@/lib/mock-db'
+import { db } from '@/lib/db'
 
 export async function GET(request: NextRequest) {
   try {
@@ -21,27 +21,29 @@ export async function GET(request: NextRequest) {
     const page = parseInt(searchParams.get('page') || '1')
     const limit = parseInt(searchParams.get('limit') || '10')
 
-    let tenants = await mockDb.findTenants()
+    // Build where clause for tenants
+    const where: any = {}
     
-    // Apply search filter if provided
     if (search) {
-      const searchLower = search.toLowerCase()
-      tenants = tenants.filter(tenant => 
-        tenant.name.toLowerCase().includes(searchLower) ||
-        tenant.slug.toLowerCase().includes(searchLower) ||
-        tenant.domain?.toLowerCase().includes(searchLower)
-      )
+      where.OR = [
+        { name: { contains: search, mode: 'insensitive' } },
+        { slug: { contains: search, mode: 'insensitive' } },
+        { domain: { contains: search, mode: 'insensitive' } }
+      ]
     }
-    
-    // Apply pagination
-    const startIndex = (page - 1) * limit
-    const endIndex = startIndex + limit
-    const paginatedTenants = tenants.slice(startIndex, endIndex)
-    
-    const total = tenants.length
+
+    const [tenants, total] = await Promise.all([
+      db.tenant.findMany({
+        where,
+        skip: (page - 1) * limit,
+        take: limit,
+        orderBy: { createdAt: 'desc' }
+      }),
+      db.tenant.count({ where })
+    ])
 
     return NextResponse.json({
-      tenants: paginatedTenants,
+      tenants,
       pagination: {
         page,
         limit,
@@ -87,18 +89,23 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Slug must contain only lowercase letters, numbers, and hyphens' }, { status: 400 })
     }
 
-    // Check if tenant with this slug already exists
-    const existingTenant = await mockDb.findTenantBySlug(slug)
+    // Check if tenant with this slug already exists using real database
+    const existingTenant = await db.tenant.findUnique({
+      where: { slug }
+    })
+    
     if (existingTenant) {
       return NextResponse.json({ error: 'Tenant with this slug already exists' }, { status: 409 })
     }
 
-    const tenant = await mockDb.createTenant({
-      name,
-      slug,
-      domain,
-      settings: settings || {},
-      isActive: true
+    const tenant = await db.tenant.create({
+      data: {
+        name,
+        slug,
+        domain,
+        settings: settings || {},
+        isActive: true
+      }
     })
 
     return NextResponse.json(tenant, { status: 201 })

@@ -105,8 +105,37 @@ export default function SignupPage() {
         return
       }
 
-      // For demo purposes, we'll simulate a successful signup
-      // In a real app, this would call your registration API
+      // Call the real signup API
+      const response = await fetch('/api/auth/signup', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: formData.email,
+          password: formData.password,
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+          phone: formData.phone,
+          accountType: accountType,
+          clinicName: formData.clinicName,
+          clinicAddress: formData.clinicAddress,
+          clinicCity: formData.clinicCity,
+          clinicState: formData.clinicState,
+          clinicZip: formData.clinicZip,
+          clinicPhone: formData.clinicPhone,
+          clinicType: formData.clinicType,
+          clinicCode: formData.clinicCode,
+          role: formData.role
+        }),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Signup failed')
+      }
+
       toast({
         title: "Account created successfully!",
         description: "Welcome to PetClinic Pro. Please sign in to get started.",
@@ -120,7 +149,7 @@ export default function SignupPage() {
     } catch (error) {
       toast({
         title: "Signup failed",
-        description: "An unexpected error occurred. Please try again.",
+        description: error instanceof Error ? error.message : "An unexpected error occurred. Please try again.",
         variant: "destructive",
       })
     } finally {

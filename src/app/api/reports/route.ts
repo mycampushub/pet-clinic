@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth/config'
-import { mockDb } from '@/lib/mock-db'
+import { db } from '@/lib/db'
 
 export async function GET(request: NextRequest) {
   try {
@@ -25,18 +25,46 @@ export async function GET(request: NextRequest) {
 
     switch (reportType) {
       case 'revenue':
-        // Get revenue data from mock invoices
-        const invoices = await mockDb.findInvoices(tenantId)
-        const paidInvoices = invoices.filter(inv => inv.paymentStatus === 'PAID')
+        // Get revenue data from real invoices
+        const [invoices, paidInvoices] = await Promise.all([
+          db.invoice.findMany({
+            where: {
+              tenantId,
+              invoiceDate: {
+                gte: startDate,
+                lte: endDate
+              }
+            }
+          }),
+          db.invoice.findMany({
+            where: {
+              tenantId,
+              paymentStatus: 'PAID',
+              invoiceDate: {
+                gte: startDate,
+                lte: endDate
+              }
+            }
+          })
+        ])
         
-        // Generate mock daily revenue data
+        // Generate daily revenue data
         const dailyRevenue = []
         for (let i = 0; i < parseInt(dateRange); i++) {
           const date = new Date()
           date.setDate(date.getDate() - i)
+          const dayStart = new Date(date)
+          dayStart.setHours(0, 0, 0, 0)
+          const dayEnd = new Date(date)
+          dayEnd.setHours(23, 59, 59, 999)
+          
+          const dayInvoices = invoices.filter(inv => 
+            inv.invoiceDate >= dayStart && inv.invoiceDate <= dayEnd
+          )
+          
           dailyRevenue.push({
             date: date.toISOString().split('T')[0],
-            amount: Math.floor(Math.random() * 1000) + 200 // Mock revenue data
+            amount: dayInvoices.reduce((sum, inv) => sum + inv.total, 0)
           })
         }
 
@@ -48,8 +76,16 @@ export async function GET(request: NextRequest) {
         break
 
       case 'appointments':
-        // Get appointments data
-        const appointments = await mockDb.findVisits(tenantId)
+        // Get appointments data from real visits
+        const appointments = await db.visit.findMany({
+          where: {
+            tenantId,
+            scheduledAt: {
+              gte: startDate,
+              lte: endDate
+            }
+          }
+        })
         
         const statusCounts = appointments.reduce((acc, apt) => {
           acc[apt.status] = (acc[apt.status] || 0) + 1
@@ -64,8 +100,16 @@ export async function GET(request: NextRequest) {
         break
 
       case 'patients':
-        // Get patients data
-        const pets = await mockDb.findPets(tenantId)
+        // Get patients data from real pets
+        const pets = await db.pet.findMany({
+          where: {
+            tenantId,
+            createdAt: {
+              gte: startDate,
+              lte: endDate
+            }
+          }
+        })
         
         const speciesCounts = pets.reduce((acc, pet) => {
           acc[pet.species] = (acc[pet.species] || 0) + 1
@@ -74,14 +118,18 @@ export async function GET(request: NextRequest) {
 
         reportData = {
           total: pets.length,
-          new: pets.length, // Mock - would filter by date in real implementation
+          new: pets.length,
           bySpecies: speciesCounts
         }
         break
 
       case 'inventory':
-        // Get inventory data
-        const inventory = await mockDb.findInventory(tenantId)
+        // Get inventory data from real inventory items
+        const inventory = await db.inventoryItem.findMany({
+          where: {
+            tenantId
+          }
+        })
         
         const lowStock = inventory.filter(item => item.quantity <= item.reorderPoint)
         const expiring = inventory.filter(item => 
@@ -99,10 +147,39 @@ export async function GET(request: NextRequest) {
 
       default:
         // Overview report
-        const [allAppointments, allPatients, allInvoices] = await Promise.all([
-          mockDb.findVisits(tenantId),
-          mockDb.findPets(tenantId),
-          mockDb.findInvoices(tenantId)
+        const [allAppointments, allPatients, allInvoices, allInventory] = await Promise.all([
+          db.visit.findMany({
+            where: {
+              tenantId,
+              scheduledAt: {
+                gte: startDate,
+                lte: endDate
+              }
+            }
+          }),
+          db.pet.findMany({
+            where: {
+              tenantId,
+              createdAt: {
+                gte: startDate,
+                lte: endDate
+              }
+            }
+          }),
+          db.invoice.findMany({
+            where: {
+              tenantId,
+              invoiceDate: {
+                gte: startDate,
+                lte: endDate
+              }
+            }
+          }),
+          db.inventoryItem.findMany({
+            where: {
+              tenantId
+            }
+          })
         ])
 
         const completedAppointments = allAppointments.filter(apt => apt.status === 'COMPLETED')
@@ -121,7 +198,7 @@ export async function GET(request: NextRequest) {
             totalRevenue: paidInvoicesOverview.reduce((sum, inv) => sum + inv.total, 0)
           },
           inventory: {
-            totalItems: (await mockDb.findInventory(tenantId)).length
+            totalItems: allInventory.length
           }
         }
     }

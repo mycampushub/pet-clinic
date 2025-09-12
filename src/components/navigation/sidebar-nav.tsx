@@ -4,6 +4,7 @@ import { useState } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
+import { useSession } from "next-auth/react"
 import { 
   Calendar, 
   Heart, 
@@ -16,22 +17,43 @@ import {
   Home,
   LogOut,
   Menu,
-  X
+  X,
+  Shield,
+  Building2
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { TenantClinicSelector } from "@/tenant-clinic-selector"
+import { UserRole } from "@prisma/client"
 
-const navigation = [
-  { name: "Dashboard", href: "/dashboard", icon: Home },
-  { name: "Appointments", href: "/appointments", icon: Calendar },
-  { name: "Patients", href: "/patients", icon: Heart },
-  { name: "Clinical", href: "/clinical", icon: FileText },
-  { name: "Billing", href: "/billing", icon: CreditCard },
-  { name: "Inventory", href: "/inventory", icon: Package },
-  { name: "Reports", href: "/reports", icon: BarChart3 },
-  { name: "Settings", href: "/settings", icon: Settings },
-]
+const getNavigationForRole = (role: UserRole) => {
+  const baseNavigation = [
+    { name: "Dashboard", href: "/dashboard", icon: Home },
+    { name: "Appointments", href: "/appointments", icon: Calendar },
+    { name: "Patients", href: "/patients", icon: Heart },
+    { name: "Clinical", href: "/clinical", icon: FileText },
+    { name: "Billing", href: "/billing", icon: CreditCard },
+    { name: "Inventory", href: "/inventory", icon: Package },
+    { name: "Reports", href: "/reports", icon: BarChart3 },
+    { name: "Settings", href: "/settings", icon: Settings },
+  ]
+
+  // Add admin navigation items based on role
+  if (role === UserRole.ADMIN) {
+    return [
+      ...baseNavigation,
+      { name: "SaaS Admin", href: "/admin", icon: Shield },
+      { name: "Tenant Admin", href: "/tenant-admin", icon: Building2 }
+    ]
+  } else if (role === UserRole.MANAGER) {
+    return [
+      ...baseNavigation,
+      { name: "Tenant Admin", href: "/tenant-admin", icon: Building2 }
+    ]
+  }
+
+  return baseNavigation
+}
 
 interface SidebarNavProps {
   className?: string
@@ -39,7 +61,10 @@ interface SidebarNavProps {
 
 export function SidebarNav({ className }: SidebarNavProps) {
   const pathname = usePathname()
+  const { data: session } = useSession()
   const [sidebarOpen, setSidebarOpen] = useState(false)
+
+  const navigation = session?.user?.role ? getNavigationForRole(session.user.role as UserRole) : []
 
   return (
     <>
@@ -108,10 +133,10 @@ export function SidebarNav({ className }: SidebarNavProps) {
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-gray-900 truncate">
-                  Dr. Sarah Johnson
+                  {session?.user?.name || 'User'}
                 </p>
                 <p className="text-xs text-gray-500 truncate">
-                  Veterinarian
+                  {session?.user?.role?.replace('_', ' ') || 'Staff'}
                 </p>
               </div>
             </div>
