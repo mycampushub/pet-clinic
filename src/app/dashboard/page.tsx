@@ -1,1088 +1,555 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
-import { useRouter } from "next/navigation"
-import { Button } from "@/components/ui/button"
+import { useSession } from "next-auth/react"
+import { useEffect, useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { 
   Calendar, 
-  Clock, 
+  Heart, 
   Users, 
+  FileText, 
+  CreditCard, 
   Package, 
-  AlertTriangle, 
-  Plus, 
-  Search,
-  Settings,
-  LogOut,
-  Bell,
-  BarChart3,
-  FileText,
-  Heart,
-  Shield,
-  Building,
-  User,
-  Activity,
-  TrendingUp,
-  DollarSign,
+  Bell, 
+  Video, 
+  BarChart3, 
+  Building2,
   Stethoscope,
   Phone,
-  Mail,
-  Pill
+  AlertTriangle,
+  TrendingUp,
+  Clock,
+  CheckCircle,
+  UserPlus,
+  Activity
 } from "lucide-react"
-import Link from "next/link"
-import { useAuth } from "@/lib/auth-context"
-
-interface Appointment {
-  id: string
-  startTime: string
-  endTime: string
-  pet: {
-    name: string
-    owner: {
-      name: string
-      email: string
-      phone: string
-    }
-  }
-  provider: {
-    name: string
-    role: string
-  }
-  serviceCode: string
-  title: string
-  status: "SCHEDULED" | "CHECKED_IN" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "NO_SHOW"
-}
-
-interface Pet {
-  id: string
-  name: string
-  species: string
-  breed: string
-  owner: {
-    name: string
-    email: string
-    phone: string
-  }
-}
-
-interface User {
-  id: string
-  name: string
-  email: string
-  role: string
-  isActive: boolean
-}
-
-interface InventoryItem {
-  id: string
-  name: string
-  quantity: number
-  reorderPoint: number
-  expiryDate?: string
-  category: string
-  isControlled: boolean
-}
+import { UserRole } from "@prisma/client"
 
 interface DashboardStats {
-  totalAppointments: number
-  checkedInAppointments: number
-  totalPets: number
-  totalUsers: number
-  lowStockItems: number
-  expiringItems: number
-  controlledSubstances: number
+  todayAppointments: number
+  completedAppointments: number
+  pendingInvoices: number
+  lowInventoryItems: number
+  upcomingReminders: number
+  newPatients: number
+  revenueToday: number
 }
 
-type UserRole = "RECEPTIONIST" | "VETERINARIAN" | "VET_TECH" | "PHARMACIST" | "MANAGER" | "ADMIN" | "OWNER"
+interface RecentAppointment {
+  id: string
+  petName: string
+  ownerName: string
+  time: string
+  type: string
+  status: string
+}
 
 export default function Dashboard() {
-  const { user, logout, isLoading: authLoading } = useAuth()
-  const router = useRouter()
-  const [activeTab, setActiveTab] = useState("overview")
-  const [appointments, setAppointments] = useState<Appointment[]>([])
-  const [pets, setPets] = useState<Pet[]>([])
-  const [users, setUsers] = useState<User[]>([])
-  const [inventory, setInventory] = useState<InventoryItem[]>([])
+  const { data: session } = useSession()
   const [stats, setStats] = useState<DashboardStats>({
-    totalAppointments: 0,
-    checkedInAppointments: 0,
-    totalPets: 0,
-    totalUsers: 0,
-    lowStockItems: 0,
-    expiringItems: 0,
-    controlledSubstances: 0
+    todayAppointments: 0,
+    completedAppointments: 0,
+    pendingInvoices: 0,
+    lowInventoryItems: 0,
+    upcomingReminders: 0,
+    newPatients: 0,
+    revenueToday: 0
   })
+  const [recentAppointments, setRecentAppointments] = useState<RecentAppointment[]>([])
   const [loading, setLoading] = useState(true)
 
-  // Redirect to login if not authenticated
   useEffect(() => {
-    if (!authLoading && !user) {
-      router.push("/login")
-    } else if (user && !user.clinicId) {
-      // If user has no clinicId, redirect to a setup page or show error
-      console.error("User has no clinicId assigned:", user.email)
-      // For now, redirect to login with an error message
-      router.push("/login?error=no_clinic")
-    }
-  }, [user, authLoading, router])
-
-  // Fetch dashboard data
-  useEffect(() => {
-    if (user && user.clinicId && !loading) {
-      fetchDashboardData()
-    }
-  }, [user?.id, user?.clinicId, loading]) // Add loading to dependencies
-
-  const fetchDashboardData = async () => {
-    // Prevent multiple concurrent calls
-    if (loading) return
-    
-    try {
+    // Simulate API call to fetch dashboard data
+    const fetchDashboardData = async () => {
       setLoading(true)
+      try {
+        // Mock data - replace with actual API calls
+        const mockStats: DashboardStats = {
+          todayAppointments: 12,
+          completedAppointments: 8,
+          pendingInvoices: 5,
+          lowInventoryItems: 3,
+          upcomingReminders: 7,
+          newPatients: 2,
+          revenueToday: 1250.00
+        }
+        
+        const mockAppointments: RecentAppointment[] = [
+          { id: "1", petName: "Max", ownerName: "John Smith", time: "09:00", type: "Checkup", status: "completed" },
+          { id: "2", petName: "Luna", ownerName: "Sarah Johnson", time: "09:30", type: "Vaccination", status: "in-progress" },
+          { id: "3", petName: "Charlie", ownerName: "Mike Davis", time: "10:00", type: "Dental", status: "scheduled" },
+          { id: "4", petName: "Bella", ownerName: "Emily Brown", time: "10:30", type: "Surgery", status: "scheduled" },
+          { id: "5", petName: "Rocky", ownerName: "David Wilson", time: "11:00", type: "Grooming", status: "scheduled" }
+        ]
+        
+        setStats(mockStats)
+        setRecentAppointments(mockAppointments)
+      } catch (error) {
+        console.error("Error fetching dashboard data:", error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchDashboardData()
+  }, [])
+
+  const getRoleSpecificContent = () => {
+    switch (session?.user?.role) {
+      case UserRole.VETERINARIAN:
+        return (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Today's Appointments</CardTitle>
+                <Calendar className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{stats.todayAppointments}</div>
+                <p className="text-xs text-muted-foreground">
+                  {stats.completedAppointments} completed
+                </p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Patients Today</CardTitle>
+                <Heart className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{stats.todayAppointments}</div>
+                <p className="text-xs text-muted-foreground">
+                  {stats.newPatients} new patients
+                </p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Lab Orders</CardTitle>
+                <FileText className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">5</div>
+                <p className="text-xs text-muted-foreground">
+                  2 pending results
+                </p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Prescriptions</CardTitle>
+                <Activity className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">8</div>
+                <p className="text-xs text-muted-foreground">
+                  3 need refill
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+        )
       
-      // Fetch appointments for today
-      const today = new Date().toISOString().split('T')[0]
-      const appointmentsResponse = await fetch(`/api/v1/appointments?date=${today}`)
-      if (appointmentsResponse.ok) {
-        const appointmentsData = await appointmentsResponse.json()
-        setAppointments(appointmentsData)
-      } else {
-        console.error("Failed to fetch appointments:", appointmentsResponse.status)
-      }
-
-      // Fetch pets
-      const petsResponse = await fetch('/api/v1/pets')
-      if (petsResponse.ok) {
-        const petsData = await petsResponse.json()
-        setPets(petsData)
-      } else {
-        console.error("Failed to fetch pets:", petsResponse.status)
-      }
-
-      // Fetch users
-      const usersResponse = await fetch('/api/v1/users')
-      if (usersResponse.ok) {
-        const usersData = await usersResponse.json()
-        setUsers(usersData)
-      } else {
-        console.error("Failed to fetch users:", usersResponse.status)
-      }
-
-      // Fetch inventory
-      const inventoryResponse = await fetch('/api/v1/inventory')
-      if (inventoryResponse.ok) {
-        const inventoryData = await inventoryResponse.json()
-        setInventory(inventoryData)
-      } else {
-        console.error("Failed to fetch inventory:", inventoryResponse.status)
-      }
-
-      // Calculate stats
-      const checkedIn = appointments.filter(apt => apt.status === "CHECKED_IN").length
-      const lowStock = inventory.filter(item => item.quantity <= item.reorderPoint).length
-      const expiring = inventory.filter(item => 
-        item.expiryDate && new Date(item.expiryDate) < new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
-      ).length
-      const controlled = inventory.filter(item => item.isControlled).length
-
-      setStats({
-        totalAppointments: appointments.length,
-        checkedInAppointments: checkedIn,
-        totalPets: pets.length,
-        totalUsers: users.length,
-        lowStockItems: lowStock,
-        expiringItems: expiring,
-        controlledSubstances: controlled
-      })
-
-    } catch (error) {
-      console.error("Error fetching dashboard data:", error)
-    } finally {
-      setLoading(false)
+      case UserRole.RECEPTIONIST:
+        return (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Today's Schedule</CardTitle>
+                <Calendar className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{stats.todayAppointments}</div>
+                <p className="text-xs text-muted-foreground">
+                  2 walk-ins waiting
+                </p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Check-ins</CardTitle>
+                <CheckCircle className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{stats.completedAppointments}</div>
+                <p className="text-xs text-muted-foreground">
+                  4 pending check-in
+                </p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Phone Calls</CardTitle>
+                <Phone className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">12</div>
+                <p className="text-xs text-muted-foreground">
+                  3 messages
+                </p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">New Clients</CardTitle>
+                <UserPlus className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{stats.newPatients}</div>
+                <p className="text-xs text-muted-foreground">
+                  registered today
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+        )
+      
+      case UserRole.MANAGER:
+        return (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Today's Revenue</CardTitle>
+                <TrendingUp className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">${stats.revenueToday.toFixed(2)}</div>
+                <p className="text-xs text-muted-foreground">
+                  +12% from yesterday
+                </p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Appointments</CardTitle>
+                <Calendar className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{stats.todayAppointments}</div>
+                <p className="text-xs text-muted-foreground">
+                  85% utilization
+                </p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Pending Invoices</CardTitle>
+                <CreditCard className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{stats.pendingInvoices}</div>
+                <p className="text-xs text-muted-foreground">
+                  ${850.00} outstanding
+                </p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Staff Performance</CardTitle>
+                <Users className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">94%</div>
+                <p className="text-xs text-muted-foreground">
+                  satisfaction rate
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+        )
+      
+      default:
+        return (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Welcome</CardTitle>
+                <Heart className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">PetClinic</div>
+                <p className="text-xs text-muted-foreground">
+                  Management System
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+        )
     }
   }
 
-  if (authLoading || loading) {
+  const getQuickActions = () => {
+    switch (session?.user?.role) {
+      case UserRole.VETERINARIAN:
+        return (
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <Button className="h-20 flex-col">
+              <Stethoscope className="h-6 w-6 mb-2" />
+              New Consultation
+            </Button>
+            <Button variant="outline" className="h-20 flex-col">
+              <FileText className="h-6 w-6 mb-2" />
+              Lab Orders
+            </Button>
+            <Button variant="outline" className="h-20 flex-col">
+              <Activity className="h-6 w-6 mb-2" />
+              Prescriptions
+            </Button>
+            <Button variant="outline" className="h-20 flex-col">
+              <Video className="h-6 w-6 mb-2" />
+              Telemedicine
+            </Button>
+          </div>
+        )
+      
+      case UserRole.RECEPTIONIST:
+        return (
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <Button className="h-20 flex-col">
+              <Calendar className="h-6 w-6 mb-2" />
+              Book Appointment
+            </Button>
+            <Button variant="outline" className="h-20 flex-col">
+              <Users className="h-6 w-6 mb-2" />
+              Check-in Patient
+            </Button>
+            <Button variant="outline" className="h-20 flex-col">
+              <CreditCard className="h-6 w-6 mb-2" />
+              Create Invoice
+            </Button>
+            <Button variant="outline" className="h-20 flex-col">
+              <Phone className="h-6 w-6 mb-2" />
+              Call Client
+            </Button>
+          </div>
+        )
+      
+      case UserRole.MANAGER:
+        return (
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <Button className="h-20 flex-col">
+              <BarChart3 className="h-6 w-6 mb-2" />
+              View Reports
+            </Button>
+            <Button variant="outline" className="h-20 flex-col">
+              <Users className="h-6 w-6 mb-2" />
+              Manage Staff
+            </Button>
+            <Button variant="outline" className="h-20 flex-col">
+              <Package className="h-6 w-6 mb-2" />
+              Inventory
+            </Button>
+            <Button variant="outline" className="h-20 flex-col">
+              <Building2 className="h-6 w-6 mb-2" />
+              Clinic Settings
+            </Button>
+          </div>
+        )
+      
+      default:
+        return null
+    }
+  }
+
+  if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
       </div>
     )
   }
 
-  if (!user) {
-    return null // Will redirect to login
-  }
-
-  const userRole = user.role as UserRole
-  const userName = user.name
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "SCHEDULED": return "bg-blue-100 text-blue-800"
-      case "CHECKED_IN": return "bg-yellow-100 text-yellow-800"
-      case "IN_PROGRESS": return "bg-green-100 text-green-800"
-      case "COMPLETED": return "bg-gray-100 text-gray-800"
-      case "CANCELLED": return "bg-red-100 text-red-800"
-      case "NO_SHOW": return "bg-orange-100 text-orange-800"
-      default: return "bg-gray-100 text-gray-800"
-    }
-  }
-
-  const getRoleIcon = (role: UserRole) => {
-    switch (role) {
-      case "OWNER": return <Building className="h-5 w-5" />
-      case "VETERINARIAN": return <Stethoscope className="h-5 w-5" />
-      case "VET_TECH": return <Shield className="h-5 w-5" />
-      case "RECEPTIONIST": return <Phone className="h-5 w-5" />
-      case "PHARMACIST": return <Package className="h-5 w-5" />
-      case "MANAGER": return <BarChart3 className="h-5 w-5" />
-      case "ADMIN": return <Settings className="h-5 w-5" />
-      default: return <User className="h-5 w-5" />
-    }
-  }
-
-  const getRoleDisplayName = (role: UserRole) => {
-    switch (role) {
-      case "OWNER": return "Clinic Owner"
-      case "VETERINARIAN": return "Veterinarian"
-      case "VET_TECH": return "Veterinary Technician"
-      case "RECEPTIONIST": return "Receptionist"
-      case "PHARMACIST": return "Pharmacist"
-      case "MANAGER": return "Practice Manager"
-      case "ADMIN": return "Administrator"
-      default: return role
-    }
-  }
-
-  const handleLogout = () => {
-    logout()
-    router.push("/login")
-  }
-
-  const handleNewAppointment = () => {
-    // For now, show an alert since the appointment creation page doesn't exist yet
-    alert("Appointment creation feature would be implemented here. This would navigate to /appointments/new")
-  }
-
-  const handleViewAppointment = (appointmentId: string) => {
-    // For now, show an alert since the appointment detail page doesn't exist yet
-    alert(`Viewing appointment ${appointmentId}. This would navigate to /appointments/${appointmentId}`)
-  }
-
-  const handleNewSoapNote = () => {
-    // For now, show an alert since the SOAP note page doesn't exist yet
-    alert("SOAP note creation feature would be implemented here. This would navigate to /medical/soap/new")
-  }
-
-  const handlePrescribeMedication = () => {
-    // For now, show an alert since the prescription page doesn't exist yet
-    alert("Medication prescription feature would be implemented here. This would navigate to /pharmacy/prescribe")
-  }
-
-  const handleOrderLabTest = () => {
-    // For now, show an alert since the lab order page doesn't exist yet
-    alert("Lab test ordering feature would be implemented here. This would navigate to /laboratory/orders/new")
-  }
-
-  const handleViewNotifications = () => {
-    // For now, show an alert since the notifications page doesn't exist yet
-    alert("Notifications center would be implemented here. This would navigate to /notifications")
-  }
-
-  const formatTime = (dateString: string) => {
-    return new Date(dateString).toLocaleTimeString('en-US', { 
-      hour: '2-digit', 
-      minute: '2-digit' 
-    })
-  }
-
-  const renderDashboardHeader = () => (
-    <div className="flex items-center justify-between mb-8">
-      <div>
-        <h1 className="text-3xl font-bold">Dashboard</h1>
-        <p className="text-muted-foreground">
-          Welcome back, {userName}
-        </p>
-      </div>
-      <div className="flex items-center gap-4">
-        <div className="flex items-center gap-2">
-          <div className={`p-2 rounded-lg ${getRoleIcon(userRole).props.className.includes('text-') ? 'bg-blue-100 text-blue-600' : 'bg-blue-100 text-blue-600'}`}>
-            {getRoleIcon(userRole)}
-          </div>
-          <div>
-            <div className="font-medium">{userName}</div>
-            <div className="text-sm text-muted-foreground">{getRoleDisplayName(userRole)}</div>
+  return (
+    <div className="min-h-screen bg-gray-50">
+      {/* Header */}
+      <header className="bg-white shadow-sm border-b">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            <div className="flex items-center">
+              <Heart className="h-8 w-8 text-blue-600 mr-3" />
+              <h1 className="text-2xl font-bold text-gray-900">PetClinic Pro</h1>
+            </div>
+            <div className="flex items-center space-x-4">
+              <Badge variant="outline">
+                {session?.user?.role?.replace('_', ' ')}
+              </Badge>
+              <span className="text-sm text-gray-600">
+                {session?.user?.name}
+              </span>
+            </div>
           </div>
         </div>
-        <Button variant="outline" size="sm" onClick={handleViewNotifications}>
-          <Bell className="h-4 w-4 mr-2" />
-          Notifications
-        </Button>
-        <Button variant="outline" size="sm" onClick={handleLogout}>
-          <LogOut className="h-4 w-4 mr-2" />
-          Logout
-        </Button>
-      </div>
-    </div>
-  )
+      </header>
 
-  const renderOverviewDashboard = () => (
-    <div className="space-y-6">
-      {/* Stats Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Today's Appointments</CardTitle>
-            <Calendar className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.totalAppointments}</div>
-            <p className="text-xs text-muted-foreground">
-              {stats.checkedInAppointments} checked in
-            </p>
-          </CardContent>
-        </Card>
+      {/* Main Content */}
+      <main className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+        <div className="mb-8">
+          <h2 className="text-3xl font-bold text-gray-900">
+            Welcome back, {session?.user?.name?.split(' ')[0]}!
+          </h2>
+          <p className="text-gray-600">
+            Here's what's happening at your clinic today.
+          </p>
+        </div>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active Patients</CardTitle>
-            <Heart className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.totalPets}</div>
-            <p className="text-xs text-muted-foreground">Registered pets</p>
-          </CardContent>
-        </Card>
+        {/* Role-specific stats */}
+        {getRoleSpecificContent()}
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Team Members</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.totalUsers}</div>
-            <p className="text-xs text-muted-foreground">Active staff</p>
-          </CardContent>
-        </Card>
+        {/* Quick Actions */}
+        <div className="mt-8">
+          <h3 className="text-lg font-semibold mb-4">Quick Actions</h3>
+          {getQuickActions()}
+        </div>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Inventory Alerts</CardTitle>
-            <AlertTriangle className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-yellow-600">{stats.lowStockItems + stats.expiringItems}</div>
-            <p className="text-xs text-muted-foreground">
-              {stats.lowStockItems} low stock, {stats.expiringItems} expiring
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Today's Schedule */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle>Today's Schedule</CardTitle>
-              <CardDescription>Upcoming appointments and check-ins</CardDescription>
-            </div>
-            <Button onClick={handleNewAppointment}>
-              <Plus className="h-4 w-4 mr-2" />
-              New Appointment
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent>
-          {appointments.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              No appointments scheduled for today
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {appointments.map((appointment) => (
-                <div key={appointment.id} className="flex items-center justify-between p-4 border rounded-lg">
-                  <div className="flex items-center space-x-4">
-                    <div className="text-sm font-medium">{formatTime(appointment.startTime)}</div>
-                    <div>
-                      <div className="font-medium">{appointment.pet.name}</div>
-                      <div className="text-sm text-muted-foreground">
-                        {appointment.pet.owner.name} • {appointment.serviceCode}
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Badge className={getStatusColor(appointment.status)}>
-                      {appointment.status.replace('_', ' ')}
-                    </Badge>
-                    <div className="text-sm text-muted-foreground">
-                      {appointment.provider.name}
-                    </div>
-                    <Button size="sm" variant="outline" onClick={() => handleViewAppointment(appointment.id)}>
-                      View Details
-                    </Button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
-    </div>
-  )
-
-  const renderVeterinarianDashboard = () => (
-    <div className="space-y-6">
-      {/* Today's Schedule */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Today's Schedule</CardTitle>
-          <CardDescription>Your appointments and patient visits</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {appointments.map((appointment) => (
-              <div key={appointment.id} className="flex items-center justify-between p-4 border rounded-lg">
-                <div className="flex items-center space-x-4">
-                  <div className="text-sm font-medium">{formatTime(appointment.startTime)}</div>
-                  <div>
-                    <div className="font-medium">{appointment.pet.name}</div>
-                    <div className="text-sm text-muted-foreground">{appointment.pet.owner.name}</div>
-                  </div>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Badge className={getStatusColor(appointment.status)}>
-                    {appointment.status.replace('_', ' ')}
-                  </Badge>
-                  <Button size="sm" variant="outline">
-                    View Details
-                  </Button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Quick Actions */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Plus className="h-5 w-5" />
-              Quick Actions
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            <Button className="w-full justify-start" onClick={handleNewSoapNote}>
-              <FileText className="h-4 w-4 mr-2" />
-              New SOAP Note
-            </Button>
-            <Button variant="outline" className="w-full justify-start" onClick={handlePrescribeMedication}>
-              <Pill className="h-4 w-4 mr-2" />
-              Prescribe Medication
-            </Button>
-            <Button variant="outline" className="w-full justify-start" onClick={handleOrderLabTest}>
-              <Package className="h-4 w-4 mr-2" />
-              Order Lab Test
-            </Button>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Activity className="h-5 w-5" />
-              Recent Activity
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              <div className="text-sm">
-                <div className="font-medium">Completed: Rex - Annual Exam</div>
-                <div className="text-muted-foreground">2 hours ago</div>
-              </div>
-              <div className="text-sm">
-                <div className="font-medium">Prescribed: Luna - Antibiotics</div>
-                <div className="text-muted-foreground">3 hours ago</div>
-              </div>
-              <div className="text-sm">
-                <div className="font-medium">Reviewed: Max - Blood Work</div>
-                <div className="text-muted-foreground">5 hours ago</div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <TrendingUp className="h-5 w-5" />
-              Performance
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              <div className="flex justify-between">
-                <span className="text-sm">Patients Seen</span>
-                <span className="text-sm font-medium">12</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-sm">Procedures</span>
-                <span className="text-sm font-medium">8</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-sm">Revenue Generated</span>
-                <span className="text-sm font-medium">$1,240</span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    </div>
-  )
-
-  const renderReceptionistDashboard = () => (
-    <div className="space-y-6">
-      {/* Main Dashboard */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Today's Appointments</CardTitle>
-            <Calendar className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.totalAppointments}</div>
-            <p className="text-xs text-muted-foreground">
-              {stats.checkedInAppointments} checked in
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active Patients</CardTitle>
-            <Heart className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.totalPets}</div>
-            <p className="text-xs text-muted-foreground">Registered pets</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Team Members</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.totalUsers}</div>
-            <p className="text-xs text-muted-foreground">Active staff</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Inventory Alerts</CardTitle>
-            <AlertTriangle className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-yellow-600">{stats.lowStockItems + stats.expiringItems}</div>
-            <p className="text-xs text-muted-foreground">
-              {stats.lowStockItems} low stock, {stats.expiringItems} expiring
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Today's Appointments */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle>Today's Appointments</CardTitle>
-              <CardDescription>Manage your clinic's schedule</CardDescription>
-            </div>
-            <Button onClick={handleNewAppointment}>
-              <Plus className="h-4 w-4 mr-2" />
-              New Appointment
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent>
-          {appointments.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              No appointments scheduled for today
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {appointments.map((appointment) => (
-                <div key={appointment.id} className="flex items-center justify-between p-4 border rounded-lg">
-                  <div className="flex items-center space-x-4">
-                    <div className="text-sm font-medium">{formatTime(appointment.startTime)}</div>
-                    <div>
-                      <div className="font-medium">{appointment.pet.name}</div>
-                      <div className="text-sm text-muted-foreground">
-                        {appointment.pet.owner.name} • {appointment.serviceCode}
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Badge className={getStatusColor(appointment.status)}>
-                      {appointment.status.replace('_', ' ')}
-                    </Badge>
-                    <div className="text-sm text-muted-foreground">
-                      {appointment.provider.name}
-                    </div>
-                    <Button size="sm" variant="outline">
-                      Check In
-                    </Button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
-    </div>
-  )
-
-  const renderPharmacistDashboard = () => (
-    <div className="space-y-6">
-      {/* Inventory Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Low Stock Items</CardTitle>
-            <AlertTriangle className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-yellow-600">{stats.lowStockItems}</div>
-            <p className="text-xs text-muted-foreground">Require reordering</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Expiring Soon</CardTitle>
-            <Clock className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-orange-600">{stats.expiringItems}</div>
-            <p className="text-xs text-muted-foreground">Within 30 days</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Controlled Substances</CardTitle>
-            <Shield className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-red-600">{stats.controlledSubstances}</div>
-            <p className="text-xs text-muted-foreground">Require special handling</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Items</CardTitle>
-            <Package className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{inventory.length}</div>
-            <p className="text-xs text-muted-foreground">In inventory</p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Inventory Alerts */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle>Inventory Alerts</CardTitle>
-              <CardDescription>Items requiring attention</CardDescription>
-            </div>
-            <Button>
-              <Plus className="h-4 w-4 mr-2" />
-              Add Item
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent>
-          {inventory.filter(item => item.quantity <= item.reorderPoint || 
-            (item.expiryDate && new Date(item.expiryDate) < new Date(Date.now() + 30 * 24 * 60 * 60 * 1000))
-          ).length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              No inventory alerts at this time
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {inventory
-                .filter(item => item.quantity <= item.reorderPoint || 
-                  (item.expiryDate && new Date(item.expiryDate) < new Date(Date.now() + 30 * 24 * 60 * 60 * 1000))
-                )
-                .map((item) => {
-                  const isLowStock = item.quantity <= item.reorderPoint
-                  const isExpiring = item.expiryDate && new Date(item.expiryDate) < new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
-                  
-                  return (
-                    <div key={item.id} className="flex items-center justify-between p-4 border rounded-lg">
-                      <div>
-                        <div className="font-medium">{item.name}</div>
-                        <div className="text-sm text-muted-foreground">
-                          {item.category} • {item.quantity} in stock
-                        </div>
-                        {item.expiryDate && (
-                          <div className="text-xs text-muted-foreground">
-                            Expires: {new Date(item.expiryDate).toLocaleDateString()}
+        {/* Tabs for different sections */}
+        <div className="mt-8">
+          <Tabs defaultValue="appointments" className="space-y-4">
+            <TabsList>
+              <TabsTrigger value="appointments">Today's Appointments</TabsTrigger>
+              <TabsTrigger value="alerts">Alerts & Reminders</TabsTrigger>
+              <TabsTrigger value="activity">Recent Activity</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="appointments">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Today's Schedule</CardTitle>
+                  <CardDescription>
+                    Your appointments for today
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {recentAppointments.map((appointment) => (
+                      <div key={appointment.id} className="flex items-center justify-between p-4 border rounded-lg">
+                        <div className="flex items-center space-x-4">
+                          <div className="flex-shrink-0">
+                            <Clock className="h-5 w-5 text-gray-400" />
                           </div>
-                        )}
+                          <div>
+                            <p className="font-medium">{appointment.petName}</p>
+                            <p className="text-sm text-gray-500">{appointment.ownerName}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center space-x-4">
+                          <div className="text-right">
+                            <p className="text-sm font-medium">{appointment.time}</p>
+                            <p className="text-xs text-gray-500">{appointment.type}</p>
+                          </div>
+                          <Badge 
+                            variant={
+                              appointment.status === 'completed' ? 'default' :
+                              appointment.status === 'in-progress' ? 'secondary' :
+                              'outline'
+                            }
+                          >
+                            {appointment.status}
+                          </Badge>
+                        </div>
                       </div>
-                      <div className="flex items-center space-x-2">
-                        {isLowStock && (
-                          <Badge className="bg-yellow-100 text-yellow-800">
-                            Low Stock
-                          </Badge>
-                        )}
-                        {isExpiring && (
-                          <Badge className="bg-orange-100 text-orange-800">
-                            Expiring Soon
-                          </Badge>
-                        )}
-                        {item.isControlled && (
-                          <Badge className="bg-red-100 text-red-800">
-                            Controlled
-                          </Badge>
-                        )}
-                        <Button size="sm" variant="outline">
-                          Order More
-                        </Button>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+            
+            <TabsContent value="alerts">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center">
+                      <AlertTriangle className="h-5 w-5 mr-2 text-yellow-600" />
+                      Inventory Alerts
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm">Amoxicillin 250mg</span>
+                        <Badge variant="destructive">2 left</Badge>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm">Pain Relief Syrup</span>
+                        <Badge variant="outline">Expiring soon</Badge>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm">Vaccine Kit</span>
+                        <Badge variant="outline">Low stock</Badge>
                       </div>
                     </div>
-                  )
-                })}
-            </div>
-          )}
-        </CardContent>
-      </Card>
-    </div>
-  )
-
-  const renderManagerDashboard = () => (
-    <div className="space-y-6">
-      {/* Business Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">$15,450</div>
-            <p className="text-xs text-muted-foreground">+12% from last month</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active Patients</CardTitle>
-            <Heart className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.totalPets}</div>
-            <p className="text-xs text-muted-foreground">+8% growth</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Appointments</CardTitle>
-            <Calendar className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.totalAppointments}</div>
-            <p className="text-xs text-muted-foreground">Today's schedule</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Team Size</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.totalUsers}</div>
-            <p className="text-xs text-muted-foreground">Active staff members</p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Analytics */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Revenue Trends</CardTitle>
-            <CardDescription>Monthly revenue overview</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="h-64 bg-gray-100 rounded-lg flex items-center justify-center">
-              <BarChart3 className="h-8 w-8 text-gray-400" />
-              <span className="ml-2 text-gray-500">Revenue Chart Placeholder</span>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Clinic Performance</CardTitle>
-            <CardDescription>Key performance indicators</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="flex justify-between items-center">
-                <span>Patient Satisfaction</span>
-                <div className="flex items-center">
-                  <div className="w-32 bg-gray-200 rounded-full h-2 mr-2">
-                    <div className="bg-green-600 h-2 rounded-full" style={{ width: '92%' }}></div>
+                  </CardContent>
+                </Card>
+                
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center">
+                      <Bell className="h-5 w-5 mr-2 text-blue-600" />
+                      Upcoming Reminders
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm font-medium">Max - Vaccination</p>
+                          <p className="text-xs text-gray-500">Due tomorrow</p>
+                        </div>
+                        <Badge variant="outline">Vaccine</Badge>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm font-medium">Luna - Medication</p>
+                          <p className="text-xs text-gray-500">Refill needed</p>
+                        </div>
+                        <Badge variant="outline">Meds</Badge>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </TabsContent>
+            
+            <TabsContent value="activity">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Recent Activity</CardTitle>
+                  <CardDescription>
+                    Latest updates from your clinic
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div className="flex items-center space-x-4 p-3 bg-gray-50 rounded">
+                      <CheckCircle className="h-5 w-5 text-green-600" />
+                      <div className="flex-1">
+                        <p className="text-sm">John Smith completed payment for Max's consultation</p>
+                        <p className="text-xs text-gray-500">2 minutes ago</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center space-x-4 p-3 bg-gray-50 rounded">
+                      <FileText className="h-5 w-5 text-blue-600" />
+                      <div className="flex-1">
+                        <p className="text-sm">Lab results received for Luna's blood test</p>
+                        <p className="text-xs text-gray-500">15 minutes ago</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center space-x-4 p-3 bg-gray-50 rounded">
+                      <UserPlus className="h-5 w-5 text-purple-600" />
+                      <div className="flex-1">
+                        <p className="text-sm">New patient Charlie registered</p>
+                        <p className="text-xs text-gray-500">1 hour ago</p>
+                      </div>
+                    </div>
                   </div>
-                  <span className="text-sm">92%</span>
-                </div>
-              </div>
-              <div className="flex justify-between items-center">
-                <span>Appointment Fill Rate</span>
-                <div className="flex items-center">
-                  <div className="w-32 bg-gray-200 rounded-full h-2 mr-2">
-                    <div className="bg-blue-600 h-2 rounded-full" style={{ width: '87%' }}></div>
-                  </div>
-                  <span className="text-sm">87%</span>
-                </div>
-              </div>
-              <div className="flex justify-between items-center">
-                <span>Revenue Growth</span>
-                <div className="flex items-center">
-                  <div className="w-32 bg-gray-200 rounded-full h-2 mr-2">
-                    <div className="bg-purple-600 h-2 rounded-full" style={{ width: '78%' }}></div>
-                  </div>
-                  <span className="text-sm">78%</span>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    </div>
-  )
-
-  const renderAdminDashboard = () => (
-    <div className="space-y-6">
-      {/* System Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Tenants</CardTitle>
-            <Building className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">1</div>
-            <p className="text-xs text-muted-foreground">Active tenants</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Clinics</CardTitle>
-            <Building className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">1</div>
-            <p className="text-xs text-muted-foreground">Registered clinics</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Users</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.totalUsers}</div>
-            <p className="text-xs text-muted-foreground">System-wide</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Pets</CardTitle>
-            <Heart className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.totalPets}</div>
-            <p className="text-xs text-muted-foreground">Registered patients</p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* System Management */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Recent Activity</CardTitle>
-            <CardDescription>System-wide user activity</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              <div className="text-center text-muted-foreground">
-                <Activity className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                <p>No recent activity to display</p>
-                <p className="text-xs">Activity will appear here as you use the system</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>System Health</CardTitle>
-            <CardDescription>System status and performance</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="flex justify-between items-center">
-                <span>Database Status</span>
-                <Badge className="bg-green-100 text-green-800">Healthy</Badge>
-              </div>
-              <div className="flex justify-between items-center">
-                <span>API Response Time</span>
-                <span className="text-sm font-medium">45ms</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span>Active Sessions</span>
-                <span className="text-sm font-medium">12</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span>Storage Usage</span>
-                <span className="text-sm font-medium">2.3 GB / 10 GB</span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    </div>
-  )
-
-  const renderDashboardContent = () => {
-    switch (userRole) {
-      case "VETERINARIAN":
-        return renderVeterinarianDashboard()
-      case "RECEPTIONIST":
-        return renderReceptionistDashboard()
-      case "PHARMACIST":
-        return renderPharmacistDashboard()
-      case "MANAGER":
-        return renderManagerDashboard()
-      case "ADMIN":
-        return renderAdminDashboard()
-      case "OWNER":
-        return renderManagerDashboard() // Owner sees same as manager for now
-      default:
-        return renderOverviewDashboard()
-    }
-  }
-
-  return (
-    <div className="container mx-auto py-8">
-      {renderDashboardHeader()}
-      
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList>
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="appointments">Appointments</TabsTrigger>
-          <TabsTrigger value="patients">Patients</TabsTrigger>
-          <TabsTrigger value="inventory">Inventory</TabsTrigger>
-          <TabsTrigger value="billing">Billing</TabsTrigger>
-          <TabsTrigger value="reports">Reports</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="overview">
-          {renderDashboardContent()}
-        </TabsContent>
-
-        <TabsContent value="appointments">
-          <Card>
-            <CardHeader>
-              <CardTitle>Appointment Management</CardTitle>
-              <CardDescription>Manage all appointments and scheduling</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center py-8 text-muted-foreground">
-                Appointment management interface would be implemented here
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="patients">
-          <Card>
-            <CardHeader>
-              <CardTitle>Patient Management</CardTitle>
-              <CardDescription>Manage patient records and information</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center py-8 text-muted-foreground">
-                Patient management interface would be implemented here
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="inventory">
-          <Card>
-            <CardHeader>
-              <CardTitle>Inventory Management</CardTitle>
-              <CardDescription>Manage medications, supplies, and stock levels</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center py-8 text-muted-foreground">
-                Inventory management interface would be implemented here
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="billing">
-          <Card>
-            <CardHeader>
-              <CardTitle>Billing & Invoicing</CardTitle>
-              <CardDescription>Manage invoices, payments, and billing</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center py-8 text-muted-foreground">
-                Billing management interface would be implemented here
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="reports">
-          <Card>
-            <CardHeader>
-              <CardTitle>Reports & Analytics</CardTitle>
-              <CardDescription>View reports and business analytics</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center py-8 text-muted-foreground">
-                Reports and analytics would be implemented here
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
+        </div>
+      </main>
     </div>
   )
 }

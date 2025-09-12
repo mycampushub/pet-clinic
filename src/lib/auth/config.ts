@@ -1,0 +1,136 @@
+import { NextAuthOptions } from "next-auth"
+import { UserRole } from "@prisma/client"
+import CredentialsProvider from "next-auth/providers/credentials"
+import GoogleProvider from "next-auth/providers/google"
+import bcrypt from "bcryptjs"
+import { db } from "@/lib/db"
+
+export const authOptions: NextAuthOptions = {
+  providers: [
+    GoogleProvider({
+      clientId: process.env.GOOGLE_CLIENT_ID || "",
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
+    }),
+    CredentialsProvider({
+      name: "credentials",
+      credentials: {
+        email: { label: "Email", type: "email" },
+        password: { label: "Password", type: "password" },
+        clinicCode: { label: "Clinic Code", type: "text", optional: true }
+      },
+      async authorize(credentials) {
+        if (!credentials?.email || !credentials?.password) {
+          return null
+        }
+
+        try {
+          // Handle clinic code login
+          if (credentials.clinicCode) {
+            // Find clinic by access code
+            const clinic = await db.clinic.findFirst({
+              where: {
+                name: {
+                  contains: credentials.clinicCode,
+                  mode: "insensitive"
+                }
+              }
+            })
+
+            if (!clinic) {
+              return null
+            }
+
+            // Find user by email and clinic
+            const user = await db.user.findFirst({
+              where: {
+                email: credentials.email,
+                clinicId: clinic.id
+              }
+            })
+
+            if (!user || !user.isActive) {
+              return null
+            }
+
+            const isPasswordValid = await bcrypt.compare(
+              credentials.password,
+              user.password
+            )
+
+            if (!isPasswordValid) {
+              return null
+            }
+
+            return {
+              id: user.id,
+              email: user.email,
+              name: `${user.firstName} ${user.lastName}`,
+              role: user.role,
+              clinicId: user.clinicId,
+              tenantId: user.tenantId
+            }
+          } else {
+            // Handle regular email login
+            const user = await db.user.findUnique({
+              where: {
+                email: credentials.email
+              }
+            })
+
+            if (!user || !user.isActive) {
+              return null
+            }
+
+            const isPasswordValid = await bcrypt.compare(
+              credentials.password,
+              user.password
+            )
+
+            if (!isPasswordValid) {
+              return null
+            }
+
+            return {
+              id: user.id,
+              email: user.email,
+              name: `${user.firstName} ${user.lastName}`,
+              role: user.role,
+              clinicId: user.clinicId,
+              tenantId: user.tenantId
+            }
+          }
+        } catch (error) {
+          console.error("Authorization error:", error)
+          return null
+        }
+      }
+    })
+  ],
+  session: {
+    strategy: "jwt"
+  },
+  callbacks: {
+    async jwt({ token, user }) {
+      if (user) {
+        token.role = user.role
+        token.clinicId = user.clinicId
+        token.tenantId = user.tenantId
+      }
+      return token
+    },
+    async session({ session, token }) {
+      if (token) {
+        session.user.id = token.sub!
+        session.user.role = token.role as UserRole
+        session.user.clinicId = token.clinicId as string | null
+        session.user.tenantId = token.tenantId as string
+      }
+      return session
+    }
+  },
+  pages: {
+    signIn: "/login",
+    signUp: "/signup",
+    error: "/login"
+  }
+}
