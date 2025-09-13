@@ -9,7 +9,8 @@ import {
   MapPin,
   Check,
   Plus,
-  Settings
+  Settings,
+  BarChart3
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
@@ -178,7 +179,7 @@ export function TenantClinicSelector({ className }: TenantClinicSelectorProps) {
     <div className={`space-y-4 ${className}`}>
       {/* Tenant Selector */}
       {canSwitchTenants && (
-        <Card>
+        <Card className="w-full">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium flex items-center">
               <Globe className="h-4 w-4 mr-2" />
@@ -193,7 +194,7 @@ export function TenantClinicSelector({ className }: TenantClinicSelectorProps) {
                     {currentTenant ? (
                       <div className="flex items-center">
                         <Building2 className="h-4 w-4 mr-2" />
-                        {currentTenant.name}
+                        <span className="truncate">{currentTenant.name}</span>
                       </div>
                     ) : (
                       "Select organization"
@@ -201,14 +202,19 @@ export function TenantClinicSelector({ className }: TenantClinicSelectorProps) {
                   </SelectValue>
                   <ChevronDown className="h-4 w-4 opacity-50" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="w-full max-w-md">
                   {tenants.map((tenant) => (
                     <SelectItem key={tenant.id} value={tenant.id}>
-                      <div className="flex items-center">
-                        <Building2 className="h-4 w-4 mr-2" />
-                        {tenant.name}
+                      <div className="flex items-center w-full">
+                        <Building2 className="h-4 w-4 mr-2 flex-shrink-0" />
+                        <div className="flex-1 min-w-0">
+                          <div className="truncate">{tenant.name}</div>
+                          {tenant.domain && (
+                            <div className="text-xs text-gray-500 truncate">{tenant.domain}</div>
+                          )}
+                        </div>
                         {tenant.id === selectedTenant && (
-                          <Check className="h-4 w-4 ml-2 text-green-600" />
+                          <Check className="h-4 w-4 ml-2 text-green-600 flex-shrink-0" />
                         )}
                       </div>
                     </SelectItem>
@@ -217,9 +223,9 @@ export function TenantClinicSelector({ className }: TenantClinicSelectorProps) {
               </Select>
               
               {currentTenant && (
-                <div className="text-xs text-gray-500">
+                <div className="text-xs text-gray-500 space-y-1">
                   {currentTenant.domain && (
-                    <div>Domain: {currentTenant.domain}</div>
+                    <div className="truncate">Domain: {currentTenant.domain}</div>
                   )}
                   <div>Slug: {currentTenant.slug}</div>
                 </div>
@@ -231,7 +237,7 @@ export function TenantClinicSelector({ className }: TenantClinicSelectorProps) {
 
       {/* Clinic Selector */}
       {canSwitchClinics && (
-        <Card>
+        <Card className="w-full">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium flex items-center">
               <MapPin className="h-4 w-4 mr-2" />
@@ -246,7 +252,7 @@ export function TenantClinicSelector({ className }: TenantClinicSelectorProps) {
                     {currentClinic ? (
                       <div className="flex items-center">
                         <MapPin className="h-4 w-4 mr-2" />
-                        {currentClinic.name}
+                        <span className="truncate">{currentClinic.name}</span>
                       </div>
                     ) : (
                       "Select location"
@@ -254,17 +260,17 @@ export function TenantClinicSelector({ className }: TenantClinicSelectorProps) {
                   </SelectValue>
                   <ChevronDown className="h-4 w-4 opacity-50" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="w-full max-w-md max-h-60 overflow-y-auto">
                   {tenantClinics.map((clinic) => (
                     <SelectItem key={clinic.id} value={clinic.id}>
-                      <div className="flex items-center">
-                        <MapPin className="h-4 w-4 mr-2" />
-                        <div>
-                          <div>{clinic.name}</div>
-                          <div className="text-xs text-gray-500">{clinic.city}, {clinic.state}</div>
+                      <div className="flex items-center w-full">
+                        <MapPin className="h-4 w-4 mr-2 flex-shrink-0" />
+                        <div className="flex-1 min-w-0">
+                          <div className="truncate">{clinic.name}</div>
+                          <div className="text-xs text-gray-500 truncate">{clinic.city}, {clinic.state}</div>
                         </div>
                         {clinic.id === selectedClinic && (
-                          <Check className="h-4 w-4 ml-2 text-green-600" />
+                          <Check className="h-4 w-4 ml-2 text-green-600 flex-shrink-0" />
                         )}
                       </div>
                     </SelectItem>
@@ -273,9 +279,9 @@ export function TenantClinicSelector({ className }: TenantClinicSelectorProps) {
               </Select>
               
               {currentClinic && (
-                <div className="text-xs text-gray-500">
-                  <div>{currentClinic.address}</div>
-                  <div>{currentClinic.city}, {currentClinic.state} {currentClinic.zipCode}</div>
+                <div className="text-xs text-gray-500 space-y-1">
+                  <div className="truncate">{currentClinic.address}</div>
+                  <div className="truncate">{currentClinic.city}, {currentClinic.state} {currentClinic.zipCode}</div>
                   <div>{currentClinic.phone}</div>
                 </div>
               )}
@@ -284,9 +290,9 @@ export function TenantClinicSelector({ className }: TenantClinicSelectorProps) {
         </Card>
       )}
 
-      {/* Management Actions */}
+      {/* Multi-Branch Management */}
       {(canSwitchTenants || canSwitchClinics) && (
-        <Card>
+        <Card className="w-full">
           <CardContent className="pt-6">
             <div className="space-y-2">
               {canSwitchTenants && (
@@ -297,7 +303,7 @@ export function TenantClinicSelector({ className }: TenantClinicSelectorProps) {
                       Manage Organizations
                     </Button>
                   </DialogTrigger>
-                  <DialogContent>
+                  <DialogContent className="sm:max-w-md">
                     <DialogHeader>
                       <DialogTitle>Organization Management</DialogTitle>
                       <DialogDescription>
@@ -317,7 +323,6 @@ export function TenantClinicSelector({ className }: TenantClinicSelectorProps) {
                       <Button 
                         onClick={() => {
                           setShowTenantDialog(false)
-                          // Navigate to tenant management page
                           window.location.href = '/settings/tenants'
                         }}
                         className="w-full"
@@ -337,7 +342,7 @@ export function TenantClinicSelector({ className }: TenantClinicSelectorProps) {
                       Manage Locations
                     </Button>
                   </DialogTrigger>
-                  <DialogContent>
+                  <DialogContent className="sm:max-w-md">
                     <DialogHeader>
                       <DialogTitle>Location Management</DialogTitle>
                       <DialogDescription>
@@ -357,7 +362,6 @@ export function TenantClinicSelector({ className }: TenantClinicSelectorProps) {
                       <Button 
                         onClick={() => {
                           setShowClinicDialog(false)
-                          // Navigate to clinic management page
                           window.location.href = '/settings/clinics'
                         }}
                         className="w-full"
@@ -368,13 +372,38 @@ export function TenantClinicSelector({ className }: TenantClinicSelectorProps) {
                   </DialogContent>
                 </Dialog>
               )}
+
+              {/* Quick Actions */}
+              <div className="pt-2 border-t">
+                <p className="text-xs font-medium text-gray-700 mb-2">Quick Actions</p>
+                <div className="grid grid-cols-2 gap-2">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="text-xs"
+                    onClick={() => window.location.href = '/tenant-admin'}
+                  >
+                    <Settings className="h-3 w-3 mr-1" />
+                    Admin Panel
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="text-xs"
+                    onClick={() => window.location.href = '/dashboard'}
+                  >
+                    <BarChart3 className="h-3 w-3 mr-1" />
+                    Dashboard
+                  </Button>
+                </div>
+              </div>
             </div>
           </CardContent>
         </Card>
       )}
 
       {/* Current Status */}
-      <Card>
+      <Card className="w-full">
         <CardContent className="pt-6">
           <div className="space-y-2">
             <div className="flex items-center justify-between">
@@ -385,12 +414,12 @@ export function TenantClinicSelector({ className }: TenantClinicSelectorProps) {
             </div>
             {currentTenant && (
               <div className="text-xs text-gray-600">
-                <div>Organization: {currentTenant.name}</div>
+                <div className="truncate">Organization: {currentTenant.name}</div>
               </div>
             )}
             {currentClinic && (
               <div className="text-xs text-gray-600">
-                <div>Location: {currentClinic.name}</div>
+                <div className="truncate">Location: {currentClinic.name}</div>
               </div>
             )}
           </div>

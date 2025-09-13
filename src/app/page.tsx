@@ -27,6 +27,41 @@ import {
 export default function Home() {
   const [email, setEmail] = useState("")
 
+  const handleDemoLogin = async (role: string) => {
+    try {
+      const credentials = {
+        admin: { email: 'manager@petclinic.com', password: 'password123' },
+        vet: { email: 'vet@petclinic.com', password: 'password123' },
+        reception: { email: 'reception@petclinic.com', password: 'password123' }
+      }
+      
+      const { email: demoEmail, password } = credentials[role as keyof typeof credentials]
+      
+      const response = await fetch('/api/auth/[...nextauth]/callback/credentials', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: demoEmail,
+          password,
+          redirect: false,
+        }),
+      })
+
+      if (response.ok) {
+        window.location.href = '/dashboard'
+      } else {
+        alert('Login failed. Please try the manual login.')
+        window.location.href = '/login'
+      }
+    } catch (error) {
+      console.error('Demo login error:', error)
+      alert('Login failed. Please try the manual login.')
+      window.location.href = '/login'
+    }
+  }
+
   const features = [
     {
       icon: Calendar,
@@ -140,6 +175,18 @@ export default function Home() {
             <div className="flex items-center space-x-4">
               <Button variant="ghost" onClick={() => window.location.href = '/login'}>
                 Sign In
+              </Button>
+              <Button variant="outline" onClick={() => window.location.href = '/admin'}>
+                SaaS Admin
+              </Button>
+              <Button variant="outline" onClick={() => handleDemoLogin('admin')}>
+                Demo Admin
+              </Button>
+              <Button variant="outline" onClick={() => handleDemoLogin('vet')}>
+                Demo Vet
+              </Button>
+              <Button variant="outline" onClick={() => handleDemoLogin('reception')}>
+                Demo Reception
               </Button>
               <Button onClick={() => window.location.href = '/signup'}>
                 Get Started

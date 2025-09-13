@@ -15,28 +15,33 @@ export async function DELETE(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const clinicId = params.id
+    const userId = params.id
 
-    // Check if clinic exists and belongs to tenant
-    const clinic = await db.clinic.findFirst({
+    // Check if user exists and belongs to tenant
+    const user = await db.user.findFirst({
       where: { 
-        id: clinicId,
+        id: userId,
         tenantId: session.user.tenantId
       }
     })
 
-    if (!clinic) {
-      return NextResponse.json({ error: 'Clinic not found' }, { status: 404 })
+    if (!user) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 })
     }
 
-    // Delete the clinic
-    await db.clinic.delete({
-      where: { id: clinicId }
+    // Don't allow deleting the current user
+    if (userId === session.user.id) {
+      return NextResponse.json({ error: 'Cannot delete your own account' }, { status: 400 })
+    }
+
+    // Delete the user
+    await db.user.delete({
+      where: { id: userId }
     })
 
     return NextResponse.json({ success: true })
   } catch (error) {
-    console.error('Error deleting clinic:', error)
+    console.error('Error deleting user:', error)
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 })
   }
 }

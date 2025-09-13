@@ -284,19 +284,19 @@ export default function Dashboard() {
       case UserRole.VETERINARIAN:
         return (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <Button className="h-20 flex-col">
+            <Button className="h-20 flex-col" onClick={() => window.location.href = '/clinical'}>
               <Stethoscope className="h-6 w-6 mb-2" />
               New Consultation
             </Button>
-            <Button variant="outline" className="h-20 flex-col">
+            <Button variant="outline" className="h-20 flex-col" onClick={() => window.location.href = '/clinical/procedures'}>
               <FileText className="h-6 w-6 mb-2" />
               Lab Orders
             </Button>
-            <Button variant="outline" className="h-20 flex-col">
+            <Button variant="outline" className="h-20 flex-col" onClick={() => window.location.href = '/clinical/prescriptions'}>
               <Activity className="h-6 w-6 mb-2" />
               Prescriptions
             </Button>
-            <Button variant="outline" className="h-20 flex-col">
+            <Button variant="outline" className="h-20 flex-col" onClick={() => window.location.href = '/integrations'}>
               <Video className="h-6 w-6 mb-2" />
               Telemedicine
             </Button>
@@ -306,19 +306,19 @@ export default function Dashboard() {
       case UserRole.RECEPTIONIST:
         return (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <Button className="h-20 flex-col">
+            <Button className="h-20 flex-col" onClick={() => window.location.href = '/appointments'}>
               <Calendar className="h-6 w-6 mb-2" />
               Book Appointment
             </Button>
-            <Button variant="outline" className="h-20 flex-col">
+            <Button variant="outline" className="h-20 flex-col" onClick={() => window.location.href = '/patients'}>
               <Users className="h-6 w-6 mb-2" />
               Check-in Patient
             </Button>
-            <Button variant="outline" className="h-20 flex-col">
+            <Button variant="outline" className="h-20 flex-col" onClick={() => window.location.href = '/billing'}>
               <CreditCard className="h-6 w-6 mb-2" />
               Create Invoice
             </Button>
-            <Button variant="outline" className="h-20 flex-col">
+            <Button variant="outline" className="h-20 flex-col" onClick={() => window.location.href = '/appointments'}>
               <Phone className="h-6 w-6 mb-2" />
               Call Client
             </Button>
@@ -328,19 +328,19 @@ export default function Dashboard() {
       case UserRole.CLINIC_ADMIN:
         return (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <Button className="h-20 flex-col">
+            <Button className="h-20 flex-col" onClick={() => window.location.href = '/reports'}>
               <BarChart3 className="h-6 w-6 mb-2" />
               View Reports
             </Button>
-            <Button variant="outline" className="h-20 flex-col">
+            <Button variant="outline" className="h-20 flex-col" onClick={() => window.location.href = '/tenant-admin/users'}>
               <Users className="h-6 w-6 mb-2" />
               Manage Staff
             </Button>
-            <Button variant="outline" className="h-20 flex-col">
+            <Button variant="outline" className="h-20 flex-col" onClick={() => window.location.href = '/inventory'}>
               <Package className="h-6 w-6 mb-2" />
               Inventory
             </Button>
-            <Button variant="outline" className="h-20 flex-col">
+            <Button variant="outline" className="h-20 flex-col" onClick={() => window.location.href = '/tenant-admin/clinics'}>
               <Building2 className="h-6 w-6 mb-2" />
               Clinic Settings
             </Button>

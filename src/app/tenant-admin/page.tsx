@@ -71,6 +71,50 @@ export default function TenantAdminDashboard() {
   const [users, setUsers] = useState<TenantUser[]>([])
   const [loading, setLoading] = useState(true)
 
+  const handleDeleteClinic = async (clinicId: string) => {
+    if (!confirm('Are you sure you want to delete this clinic? This action cannot be undone.')) {
+      return
+    }
+    
+    try {
+      const response = await fetch(`/api/clinics/${clinicId}`, {
+        method: 'DELETE',
+      })
+      
+      if (response.ok) {
+        setClinics(clinics.filter(c => c.id !== clinicId))
+        alert('Clinic deleted successfully')
+      } else {
+        alert('Failed to delete clinic')
+      }
+    } catch (error) {
+      console.error('Error deleting clinic:', error)
+      alert('Failed to delete clinic')
+    }
+  }
+
+  const handleDeleteUser = async (userId: string) => {
+    if (!confirm('Are you sure you want to delete this user? This action cannot be undone.')) {
+      return
+    }
+    
+    try {
+      const response = await fetch(`/api/tenant-admin/users/${userId}`, {
+        method: 'DELETE',
+      })
+      
+      if (response.ok) {
+        setUsers(users.filter(u => u.id !== userId))
+        alert('User deleted successfully')
+      } else {
+        alert('Failed to delete user')
+      }
+    } catch (error) {
+      console.error('Error deleting user:', error)
+      alert('Failed to delete user')
+    }
+  }
+
   useEffect(() => {
     const fetchTenantData = async () => {
       setLoading(true)
@@ -238,11 +282,11 @@ export default function TenantAdminDashboard() {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-2">
-                    <Button size="sm" className="w-full">
+                    <Button size="sm" className="w-full" onClick={() => window.location.href = '/tenant-admin/users'}>
                       <UserPlus className="h-3 w-3 mr-1" />
                       Add User
                     </Button>
-                    <Button size="sm" variant="outline" className="w-full">
+                    <Button size="sm" variant="outline" className="w-full" onClick={() => window.location.href = '/tenant-admin/clinics'}>
                       <Building2 className="h-3 w-3 mr-1" />
                       Add Clinic
                     </Button>
@@ -316,7 +360,7 @@ export default function TenantAdminDashboard() {
               <CardHeader>
                 <CardTitle className="flex items-center justify-between">
                   Manage Clinics
-                  <Button>
+                  <Button onClick={() => window.location.href = '/tenant-admin/clinics/new'}>
                     <Building2 className="h-4 w-4 mr-2" />
                     Add New Clinic
                   </Button>
@@ -353,13 +397,13 @@ export default function TenantAdminDashboard() {
                         <TableCell>{clinic.userCount}</TableCell>
                         <TableCell>
                           <div className="flex space-x-2">
-                            <Button variant="ghost" size="sm">
+                            <Button variant="ghost" size="sm" onClick={() => window.location.href = `/tenant-admin/clinics/${clinic.id}`}>
                               <Eye className="h-4 w-4" />
                             </Button>
-                            <Button variant="ghost" size="sm">
+                            <Button variant="ghost" size="sm" onClick={() => window.location.href = `/tenant-admin/clinics/${clinic.id}/edit`}>
                               <Edit className="h-4 w-4" />
                             </Button>
-                            <Button variant="ghost" size="sm">
+                            <Button variant="ghost" size="sm" onClick={() => handleDeleteClinic(clinic.id)}>
                               <Trash2 className="h-4 w-4" />
                             </Button>
                           </div>
@@ -377,7 +421,7 @@ export default function TenantAdminDashboard() {
               <CardHeader>
                 <CardTitle className="flex items-center justify-between">
                   Manage Users
-                  <Button>
+                  <Button onClick={() => window.location.href = '/tenant-admin/users/new'}>
                     <UserPlus className="h-4 w-4 mr-2" />
                     Add New User
                   </Button>
@@ -416,10 +460,10 @@ export default function TenantAdminDashboard() {
                         </TableCell>
                         <TableCell>
                           <div className="flex space-x-2">
-                            <Button variant="ghost" size="sm">
+                            <Button variant="ghost" size="sm" onClick={() => window.location.href = `/tenant-admin/users/${user.id}`}>
                               <Edit className="h-4 w-4" />
                             </Button>
-                            <Button variant="ghost" size="sm">
+                            <Button variant="ghost" size="sm" onClick={() => handleDeleteUser(user.id)}>
                               <Trash2 className="h-4 w-4" />
                             </Button>
                           </div>

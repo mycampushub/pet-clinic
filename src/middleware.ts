@@ -27,6 +27,7 @@ export async function middleware(request: Request) {
   // Role-based route protection
   const roleBasedRoutes: Record<string, UserRole[]> = {
     "/admin": [UserRole.ADMIN],
+    "/tenant-admin": [UserRole.ADMIN, UserRole.CLINIC_ADMIN],
     "/veterinarian": [UserRole.VETERINARIAN, UserRole.ADMIN],
     "/clinic-admin": [UserRole.CLINIC_ADMIN, UserRole.ADMIN],
     "/reception": [UserRole.RECEPTIONIST, UserRole.ADMIN, UserRole.CLINIC_ADMIN],
