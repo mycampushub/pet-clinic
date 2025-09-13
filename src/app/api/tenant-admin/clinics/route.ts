@@ -59,3 +59,54 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 })
   }
 }
+
+export async function POST(request: NextRequest) {
+  try {
+    const session = await getServerSession(authOptions)
+    
+    if (!session || (session.user.role !== UserRole.ADMIN && session.user.role !== UserRole.CLINIC_ADMIN)) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const tenantId = session.user.tenantId
+    const body = await request.json()
+    const { name, address, city, state, zipCode, country, phone, email, website, timezone, settings } = body
+
+    // Validate required fields
+    if (!name || !address || !city || !state || !zipCode || !phone) {
+      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
+    }
+
+    // Create clinic
+    const clinic = await db.clinic.create({
+      data: {
+        tenantId,
+        name,
+        address,
+        city,
+        state,
+        zipCode,
+        country: country || 'US',
+        phone,
+        email,
+        website,
+        timezone: timezone || 'UTC',
+        settings: settings || {},
+        isActive: true
+      }
+    })
+
+    return NextResponse.json({
+      id: clinic.id,
+      name: clinic.name,
+      address: clinic.address,
+      city: clinic.city,
+      state: clinic.state,
+      phone: clinic.phone,
+      isActive: clinic.isActive
+    })
+  } catch (error) {
+    console.error('Error creating clinic:', error)
+    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 })
+  }
+}

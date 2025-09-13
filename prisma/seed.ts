@@ -273,9 +273,10 @@ async function main() {
 
   // Create invoices
   const invoice1 = await prisma.invoice.upsert({
-    where: { id: 'inv-1' },
+    where: { invoiceNumber: 'INV-2024-001' },
     update: {},
     create: {
+      id: 'inv-1',
       tenantId: tenant.id,
       clinicId: clinic.id,
       visitId: visit1.id,

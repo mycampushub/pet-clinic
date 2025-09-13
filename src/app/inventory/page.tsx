@@ -5,8 +5,11 @@ import { useSession } from "next-auth/react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { 
   Package, 
   Plus, 
@@ -26,7 +29,9 @@ import {
   Calendar,
   DollarSign,
   Scale,
-  AlertCircle
+  AlertCircle,
+  Trash2,
+  Save
 } from "lucide-react"
 import { InventoryItem, Medication } from "@prisma/client"
 
@@ -52,6 +57,31 @@ export default function InventoryPage() {
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedItem, setSelectedItem] = useState<InventoryWithDetails | null>(null)
   const [loading, setLoading] = useState(true)
+  
+  // CRUD state
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
+  const [isViewDialogOpen, setIsViewDialogOpen] = useState(false)
+  const [crudLoading, setCrudLoading] = useState(false)
+  
+  // Form state
+  const [formData, setFormData] = useState({
+    name: "",
+    description: "",
+    category: "",
+    quantity: "",
+    reorderPoint: "",
+    unit: "",
+    cost: "",
+    price: "",
+    lotNumber: "",
+    expiryDate: "",
+    isControlled: false,
+    schedule: "",
+    location: "",
+    notes: "",
+    medicationId: ""
+  })
 
   useEffect(() => {
     fetchInventory()
@@ -73,183 +103,14 @@ export default function InventoryPage() {
   const fetchInventory = async () => {
     setLoading(true)
     try {
-      // Mock data - replace with actual API call
-      const mockInventory: InventoryWithDetails[] = [
-        {
-          id: "1",
-          tenantId: "1",
-          clinicId: "1",
-          medicationId: "1",
-          sku: "MED-001",
-          name: "Amoxicillin 250mg",
-          description: "Antibiotic capsules for bacterial infections",
-          category: "Antibiotics",
-          quantity: 12,
-          reorderPoint: 20,
-          unit: "capsules",
-          cost: 0.45,
-          price: 1.20,
-          lotNumber: "A12345",
-          expiryDate: new Date("2025-06-30"),
-          isControlled: false,
-          schedule: null,
-          location: "Pharmacy Cabinet A",
-          notes: "Store at room temperature",
-          isActive: true,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-          medication: {
-            id: "1",
-            tenantId: "1",
-            name: "Amoxicillin",
-            description: "Broad-spectrum antibiotic",
-            category: "Antibiotics",
-            genericName: "Amoxicillin trihydrate",
-            brandName: "Amoxil",
-            strength: "250mg",
-            dosageForm: "Capsule",
-            ndcCode: "12345-678-90",
-            schedule: null,
-            requiresPrescription: true,
-            isActive: true,
-            createdAt: new Date(),
-            updatedAt: new Date()
-          }
-        },
-        {
-          id: "2",
-          tenantId: "1",
-          clinicId: "1",
-          medicationId: "2",
-          sku: "MED-002",
-          name: "Carprofen 75mg",
-          description: "NSAID for pain and inflammation",
-          category: "Analgesics",
-          quantity: 45,
-          reorderPoint: 30,
-          unit: "tablets",
-          cost: 0.85,
-          price: 2.50,
-          lotNumber: "B67890",
-          expiryDate: new Date("2025-12-15"),
-          isControlled: false,
-          schedule: null,
-          location: "Pharmacy Cabinet B",
-          notes: "For canine use only",
-          isActive: true,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-          medication: {
-            id: "2",
-            tenantId: "1",
-            name: "Carprofen",
-            description: "Non-steroidal anti-inflammatory drug",
-            category: "Analgesics",
-            genericName: "Carprofen",
-            brandName: "Rimadyl",
-            strength: "75mg",
-            dosageForm: "Tablet",
-            ndcCode: "23456-789-01",
-            schedule: null,
-            requiresPrescription: true,
-            isActive: true,
-            createdAt: new Date(),
-            updatedAt: new Date()
-          }
-        },
-        {
-          id: "3",
-          tenantId: "1",
-          clinicId: "1",
-          medicationId: null,
-          sku: "SUP-001",
-          name: "Elizabethan Collar - Small",
-          description: "Plastic recovery collar for small dogs and cats",
-          category: "Supplies",
-          quantity: 8,
-          reorderPoint: 15,
-          unit: "each",
-          cost: 3.20,
-          price: 8.95,
-          lotNumber: "C11111",
-          expiryDate: new Date("2027-03-01"),
-          isControlled: false,
-          schedule: null,
-          location: "Supply Room",
-          notes: "Various colors available",
-          isActive: true,
-          createdAt: new Date(),
-          updatedAt: new Date()
-        },
-        {
-          id: "4",
-          tenantId: "1",
-          clinicId: "1",
-          medicationId: "3",
-          sku: "MED-003",
-          name: "Acepromazine 10mg",
-          description: "Tranquilizer for pre-anesthetic sedation",
-          category: "Tranquilizers",
-          quantity: 25,
-          reorderPoint: 15,
-          unit: "tablets",
-          cost: 0.30,
-          price: 1.75,
-          lotNumber: "D22222",
-          expiryDate: new Date("2025-08-20"),
-          isControlled: true,
-          schedule: "IV",
-          location: "Controlled Substance Cabinet",
-          notes: "Controlled substance - log all dispensing",
-          isActive: true,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-          medication: {
-            id: "3",
-            tenantId: "1",
-            name: "Acepromazine",
-            description: "Phenothiazine tranquilizer",
-            category: "Tranquilizers",
-            genericName: "Acepromazine maleate",
-            brandName: "Aceproject",
-            strength: "10mg",
-            dosageForm: "Tablet",
-            ndcCode: "34567-890-12",
-            schedule: "IV",
-            requiresPrescription: true,
-            isActive: true,
-            createdAt: new Date(),
-            updatedAt: new Date()
-          }
-        },
-        {
-          id: "5",
-          tenantId: "1",
-          clinicId: "1",
-          medicationId: null,
-          sku: "SUP-002",
-          name: "Syringe 3ml",
-          description: "Disposable syringe with luer lock",
-          category: "Medical Supplies",
-          quantity: 150,
-          reorderPoint: 100,
-          unit: "each",
-          cost: 0.15,
-          price: 0.45,
-          lotNumber: "E33333",
-          expiryDate: new Date("2026-01-15"),
-          isControlled: false,
-          schedule: null,
-          location: "Supply Room - Drawer 2",
-          notes: "Sterile, individually wrapped",
-          isActive: true,
-          createdAt: new Date(),
-          updatedAt: new Date()
-        }
-      ]
-      
-      setInventory(mockInventory)
-      setFilteredInventory(mockInventory)
+      const response = await fetch('/api/inventory')
+      if (response.ok) {
+        const inventoryData = await response.json()
+        setInventory(inventoryData)
+        setFilteredInventory(inventoryData)
+      } else {
+        console.error('Failed to fetch inventory')
+      }
     } catch (error) {
       console.error("Error fetching inventory:", error)
     } finally {
@@ -259,29 +120,23 @@ export default function InventoryPage() {
 
   const fetchAlerts = async () => {
     try {
-      // Mock alerts
-      const mockAlerts: StockAlert[] = [
-        {
-          id: "1",
-          itemId: "1",
-          itemName: "Amoxicillin 250mg",
-          type: "LOW_STOCK",
-          message: "Stock below reorder point (12 remaining, reorder at 20)",
-          severity: "MEDIUM",
+      const response = await fetch('/api/inventory?lowStock=true')
+      if (response.ok) {
+        const lowStockItems = await response.json()
+        
+        // Generate alerts based on low stock items
+        const generatedAlerts: StockAlert[] = lowStockItems.map((item: InventoryWithDetails, index: number) => ({
+          id: `alert-${index}`,
+          itemId: item.id,
+          itemName: item.name,
+          type: 'LOW_STOCK' as const,
+          message: `Stock below reorder point (${item.quantity} remaining, reorder at ${item.reorderPoint})`,
+          severity: item.quantity === 0 ? 'HIGH' : 'MEDIUM' as const,
           createdAt: new Date()
-        },
-        {
-          id: "2",
-          itemId: "3",
-          itemName: "Elizabethan Collar - Small",
-          type: "LOW_STOCK",
-          message: "Stock below reorder point (8 remaining, reorder at 15)",
-          severity: "LOW",
-          createdAt: new Date()
-        }
-      ]
-      
-      setAlerts(mockAlerts)
+        }))
+        
+        setAlerts(generatedAlerts)
+      }
     } catch (error) {
       console.error("Error fetching alerts:", error)
     }
@@ -311,6 +166,146 @@ export default function InventoryPage() {
 
   const getPotentialRevenue = () => {
     return inventory.reduce((sum, item) => sum + (item.quantity * item.price), 0)
+  }
+
+  // CRUD Functions
+  const resetForm = () => {
+    setFormData({
+      name: "",
+      description: "",
+      category: "",
+      quantity: "",
+      reorderPoint: "",
+      unit: "",
+      cost: "",
+      price: "",
+      lotNumber: "",
+      expiryDate: "",
+      isControlled: false,
+      schedule: "",
+      location: "",
+      notes: "",
+      medicationId: ""
+    })
+  }
+
+  const handleInputChange = (field: string, value: string | boolean) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: value
+    }))
+  }
+
+  const handleAddItem = async () => {
+    setCrudLoading(true)
+    try {
+      const response = await fetch('/api/inventory', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      })
+
+      if (response.ok) {
+        await fetchInventory()
+        await fetchAlerts()
+        setIsAddDialogOpen(false)
+        resetForm()
+        alert('Inventory item added successfully!')
+      } else {
+        const errorData = await response.json()
+        alert(errorData.error || 'Failed to add inventory item')
+      }
+    } catch (error) {
+      console.error('Error adding inventory item:', error)
+      alert('Error adding inventory item')
+    } finally {
+      setCrudLoading(false)
+    }
+  }
+
+  const handleEditItem = (item: InventoryWithDetails) => {
+    setSelectedItem(item)
+    setFormData({
+      name: item.name,
+      description: item.description || "",
+      category: item.category,
+      quantity: item.quantity.toString(),
+      reorderPoint: item.reorderPoint.toString(),
+      unit: item.unit,
+      cost: item.cost.toString(),
+      price: item.price.toString(),
+      lotNumber: item.lotNumber || "",
+      expiryDate: item.expiryDate ? new Date(item.expiryDate).toISOString().split('T')[0] : "",
+      isControlled: item.isControlled,
+      schedule: item.schedule || "",
+      location: item.location || "",
+      notes: item.notes || "",
+      medicationId: item.medicationId || ""
+    })
+    setIsEditDialogOpen(true)
+  }
+
+  const handleUpdateItem = async () => {
+    if (!selectedItem) return
+    
+    setCrudLoading(true)
+    try {
+      const response = await fetch(`/api/inventory/${selectedItem.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      })
+
+      if (response.ok) {
+        await fetchInventory()
+        await fetchAlerts()
+        setIsEditDialogOpen(false)
+        setSelectedItem(null)
+        resetForm()
+        alert('Inventory item updated successfully!')
+      } else {
+        const errorData = await response.json()
+        alert(errorData.error || 'Failed to update inventory item')
+      }
+    } catch (error) {
+      console.error('Error updating inventory item:', error)
+      alert('Error updating inventory item')
+    } finally {
+      setCrudLoading(false)
+    }
+  }
+
+  const handleDeleteItem = async (itemId: string) => {
+    if (!confirm('Are you sure you want to delete this inventory item? This action cannot be undone.')) {
+      return
+    }
+
+    try {
+      const response = await fetch(`/api/inventory/${itemId}`, {
+        method: 'DELETE',
+      })
+
+      if (response.ok) {
+        await fetchInventory()
+        await fetchAlerts()
+        alert('Inventory item deleted successfully!')
+      } else {
+        const errorData = await response.json()
+        alert(errorData.error || 'Failed to delete inventory item')
+      }
+    } catch (error) {
+      console.error('Error deleting inventory item:', error)
+      alert('Error deleting inventory item')
+    }
+  }
+
+  const handleViewItem = (item: InventoryWithDetails) => {
+    setSelectedItem(item)
+    setIsViewDialogOpen(true)
   }
 
   if (loading) {
@@ -348,7 +343,7 @@ export default function InventoryPage() {
         <div className="mb-8">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-3xl font-bold text-gray-900">Inventory Management</h2>
-            <Button>
+            <Button onClick={() => setIsAddDialogOpen(true)}>
               <Plus className="h-4 w-4 mr-2" />
               Add Item
             </Button>
@@ -865,6 +860,391 @@ export default function InventoryPage() {
           </TabsContent>
         </Tabs>
       </main>
+
+      {/* Add Item Dialog */}
+      <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Add New Inventory Item</DialogTitle>
+            <DialogDescription>
+              Create a new inventory item for your pharmacy or supplies.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="name">Item Name *</Label>
+              <Input
+                id="name"
+                value={formData.name}
+                onChange={(e) => handleInputChange('name', e.target.value)}
+                placeholder="Enter item name"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="category">Category *</Label>
+              <Select value={formData.category} onValueChange={(value) => handleInputChange('category', value)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select category" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Antibiotics">Antibiotics</SelectItem>
+                  <SelectItem value="Analgesics">Analgesics</SelectItem>
+                  <SelectItem value="Tranquilizers">Tranquilizers</SelectItem>
+                  <SelectItem value="Medical Supplies">Medical Supplies</SelectItem>
+                  <SelectItem value="Supplies">Supplies</SelectItem>
+                  <SelectItem value="Other">Other</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="quantity">Quantity *</Label>
+              <Input
+                id="quantity"
+                type="number"
+                value={formData.quantity}
+                onChange={(e) => handleInputChange('quantity', e.target.value)}
+                placeholder="0"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="reorderPoint">Reorder Point *</Label>
+              <Input
+                id="reorderPoint"
+                type="number"
+                value={formData.reorderPoint}
+                onChange={(e) => handleInputChange('reorderPoint', e.target.value)}
+                placeholder="0"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="unit">Unit *</Label>
+              <Select value={formData.unit} onValueChange={(value) => handleInputChange('unit', value)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select unit" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="each">Each</SelectItem>
+                  <SelectItem value="tablets">Tablets</SelectItem>
+                  <SelectItem value="capsules">Capsules</SelectItem>
+                  <SelectItem value="ml">ML</SelectItem>
+                  <SelectItem value="mg">MG</SelectItem>
+                  <SelectItem value="bottles">Bottles</SelectItem>
+                  <SelectItem value="boxes">Boxes</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="cost">Cost</Label>
+              <Input
+                id="cost"
+                type="number"
+                step="0.01"
+                value={formData.cost}
+                onChange={(e) => handleInputChange('cost', e.target.value)}
+                placeholder="0.00"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="price">Price</Label>
+              <Input
+                id="price"
+                type="number"
+                step="0.01"
+                value={formData.price}
+                onChange={(e) => handleInputChange('price', e.target.value)}
+                placeholder="0.00"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="lotNumber">Lot Number</Label>
+              <Input
+                id="lotNumber"
+                value={formData.lotNumber}
+                onChange={(e) => handleInputChange('lotNumber', e.target.value)}
+                placeholder="Lot number"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="expiryDate">Expiry Date</Label>
+              <Input
+                id="expiryDate"
+                type="date"
+                value={formData.expiryDate}
+                onChange={(e) => handleInputChange('expiryDate', e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="location">Location</Label>
+              <Input
+                id="location"
+                value={formData.location}
+                onChange={(e) => handleInputChange('location', e.target.value)}
+                placeholder="Storage location"
+              />
+            </div>
+            <div className="md:col-span-2 space-y-2">
+              <Label htmlFor="description">Description</Label>
+              <Input
+                id="description"
+                value={formData.description}
+                onChange={(e) => handleInputChange('description', e.target.value)}
+                placeholder="Item description"
+              />
+            </div>
+            <div className="md:col-span-2 space-y-2">
+              <Label htmlFor="notes">Notes</Label>
+              <Input
+                id="notes"
+                value={formData.notes}
+                onChange={(e) => handleInputChange('notes', e.target.value)}
+                placeholder="Additional notes"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleAddItem} disabled={crudLoading}>
+              {crudLoading ? 'Adding...' : 'Add Item'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Item Dialog */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Edit Inventory Item</DialogTitle>
+            <DialogDescription>
+              Update the inventory item information.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="edit-name">Item Name *</Label>
+              <Input
+                id="edit-name"
+                value={formData.name}
+                onChange={(e) => handleInputChange('name', e.target.value)}
+                placeholder="Enter item name"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-category">Category *</Label>
+              <Select value={formData.category} onValueChange={(value) => handleInputChange('category', value)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select category" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Antibiotics">Antibiotics</SelectItem>
+                  <SelectItem value="Analgesics">Analgesics</SelectItem>
+                  <SelectItem value="Tranquilizers">Tranquilizers</SelectItem>
+                  <SelectItem value="Medical Supplies">Medical Supplies</SelectItem>
+                  <SelectItem value="Supplies">Supplies</SelectItem>
+                  <SelectItem value="Other">Other</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-quantity">Quantity *</Label>
+              <Input
+                id="edit-quantity"
+                type="number"
+                value={formData.quantity}
+                onChange={(e) => handleInputChange('quantity', e.target.value)}
+                placeholder="0"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-reorderPoint">Reorder Point *</Label>
+              <Input
+                id="edit-reorderPoint"
+                type="number"
+                value={formData.reorderPoint}
+                onChange={(e) => handleInputChange('reorderPoint', e.target.value)}
+                placeholder="0"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-unit">Unit *</Label>
+              <Select value={formData.unit} onValueChange={(value) => handleInputChange('unit', value)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select unit" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="each">Each</SelectItem>
+                  <SelectItem value="tablets">Tablets</SelectItem>
+                  <SelectItem value="capsules">Capsules</SelectItem>
+                  <SelectItem value="ml">ML</SelectItem>
+                  <SelectItem value="mg">MG</SelectItem>
+                  <SelectItem value="bottles">Bottles</SelectItem>
+                  <SelectItem value="boxes">Boxes</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-cost">Cost</Label>
+              <Input
+                id="edit-cost"
+                type="number"
+                step="0.01"
+                value={formData.cost}
+                onChange={(e) => handleInputChange('cost', e.target.value)}
+                placeholder="0.00"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-price">Price</Label>
+              <Input
+                id="edit-price"
+                type="number"
+                step="0.01"
+                value={formData.price}
+                onChange={(e) => handleInputChange('price', e.target.value)}
+                placeholder="0.00"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-lotNumber">Lot Number</Label>
+              <Input
+                id="edit-lotNumber"
+                value={formData.lotNumber}
+                onChange={(e) => handleInputChange('lotNumber', e.target.value)}
+                placeholder="Lot number"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-expiryDate">Expiry Date</Label>
+              <Input
+                id="edit-expiryDate"
+                type="date"
+                value={formData.expiryDate}
+                onChange={(e) => handleInputChange('expiryDate', e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-location">Location</Label>
+              <Input
+                id="edit-location"
+                value={formData.location}
+                onChange={(e) => handleInputChange('location', e.target.value)}
+                placeholder="Storage location"
+              />
+            </div>
+            <div className="md:col-span-2 space-y-2">
+              <Label htmlFor="edit-description">Description</Label>
+              <Input
+                id="edit-description"
+                value={formData.description}
+                onChange={(e) => handleInputChange('description', e.target.value)}
+                placeholder="Item description"
+              />
+            </div>
+            <div className="md:col-span-2 space-y-2">
+              <Label htmlFor="edit-notes">Notes</Label>
+              <Input
+                id="edit-notes"
+                value={formData.notes}
+                onChange={(e) => handleInputChange('notes', e.target.value)}
+                placeholder="Additional notes"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleUpdateItem} disabled={crudLoading}>
+              {crudLoading ? 'Updating...' : 'Update Item'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* View Item Dialog */}
+      <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Inventory Item Details</DialogTitle>
+            <DialogDescription>
+              View detailed information about this inventory item.
+            </DialogDescription>
+          </DialogHeader>
+          {selectedItem && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label className="text-sm font-medium text-gray-500">Item Name</Label>
+                <p className="font-medium">{selectedItem.name}</p>
+              </div>
+              <div className="space-y-2">
+                <Label className="text-sm font-medium text-gray-500">Category</Label>
+                <p className="font-medium">{selectedItem.category}</p>
+              </div>
+              <div className="space-y-2">
+                <Label className="text-sm font-medium text-gray-500">Quantity</Label>
+                <p className="font-medium">{selectedItem.quantity} {selectedItem.unit}</p>
+              </div>
+              <div className="space-y-2">
+                <Label className="text-sm font-medium text-gray-500">Reorder Point</Label>
+                <p className="font-medium">{selectedItem.reorderPoint} {selectedItem.unit}</p>
+              </div>
+              <div className="space-y-2">
+                <Label className="text-sm font-medium text-gray-500">Cost</Label>
+                <p className="font-medium">${selectedItem.cost.toFixed(2)}</p>
+              </div>
+              <div className="space-y-2">
+                <Label className="text-sm font-medium text-gray-500">Price</Label>
+                <p className="font-medium">${selectedItem.price.toFixed(2)}</p>
+              </div>
+              {selectedItem.lotNumber && (
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium text-gray-500">Lot Number</Label>
+                  <p className="font-medium">{selectedItem.lotNumber}</p>
+                </div>
+              )}
+              {selectedItem.expiryDate && (
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium text-gray-500">Expiry Date</Label>
+                  <p className="font-medium">{new Date(selectedItem.expiryDate).toLocaleDateString()}</p>
+                </div>
+              )}
+              {selectedItem.location && (
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium text-gray-500">Location</Label>
+                  <p className="font-medium">{selectedItem.location}</p>
+                </div>
+              )}
+              {selectedItem.description && (
+                <div className="md:col-span-2 space-y-2">
+                  <Label className="text-sm font-medium text-gray-500">Description</Label>
+                  <p className="font-medium">{selectedItem.description}</p>
+                </div>
+              )}
+              {selectedItem.notes && (
+                <div className="md:col-span-2 space-y-2">
+                  <Label className="text-sm font-medium text-gray-500">Notes</Label>
+                  <p className="font-medium">{selectedItem.notes}</p>
+                </div>
+              )}
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsViewDialogOpen(false)}>
+              Close
+            </Button>
+            {selectedItem && (
+              <Button onClick={() => {
+                setIsViewDialogOpen(false)
+                handleEditItem(selectedItem)
+              }}>
+                Edit Item
+              </Button>
+            )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
